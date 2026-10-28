@@ -1,4 +1,5 @@
 import { expect, type Page, test } from "@playwright/test";
+import { expectPrompt, promptEditor, setPrompt } from "./prompt-helpers";
 
 /** The new panel on Image and Audio, and Animate from an Image card into Video. Isolated server + mock Kie.ai. */
 
@@ -55,7 +56,7 @@ test("Image: family picker, References zone, routing to edit, chips, own draft",
   await expect(zone(page)).toContainText("Images up to 14");
   await attach(page, [png("cat.png")]);
   await expect(page.getByTestId("resolved-model")).toContainText("seedream/4.5-edit");
-  await page.locator("#prompt").fill("put a hat on @image_1");
+  await setPrompt(promptEditor(page), "put a hat on @image_1");
   await expect(page.getByTestId("prompt-hint")).toContainText("image_1 is the reference image");
   await page.getByRole("button", { name: "Preview request" }).click();
   const p = JSON.parse((await page.getByTestId("request-preview").textContent())!);
@@ -87,7 +88,7 @@ test("Animate on an Image card opens Video with that image attached", async ({ p
   await page.request.post(`${MOCK}/__reset`);
   await page.request.put("/api/drafts/video", { data: {} });
   await open(page, "image", "Z-Image");
-  await page.locator("#prompt").fill("a ceramic teapot");
+  await setPrompt(promptEditor(page), "a ceramic teapot");
   await page.getByRole("button", { name: /^Generate/ }).click();
   const pay = page.getByRole("button", { name: "Generate and pay" });
   if (await pay.isVisible({ timeout: 1500 }).catch(() => false)) await pay.click();
@@ -116,7 +117,7 @@ test("Animate on an Image card opens Video with that image attached", async ({ p
 
 test("a reload right after typing keeps the last keystrokes", async ({ page }) => {
   await open(page, "image");
-  await page.locator("#prompt").fill("typed just before the reload");
+  await setPrompt(promptEditor(page), "typed just before the reload");
   await page.reload(); // no wait: the 400 ms save hasn't fired, pagehide flushes it
-  await expect(page.locator("#prompt")).toHaveValue("typed just before the reload", { timeout: 30_000 });
+  await expectPrompt(promptEditor(page), "typed just before the reload", 30_000);
 });

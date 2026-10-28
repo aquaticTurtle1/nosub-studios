@@ -1,6 +1,7 @@
 import { execFileSync } from "node:child_process";
 import path from "node:path";
 import { expect, type Page, test } from "@playwright/test";
+import { expectPrompt, promptEditor } from "./prompt-helpers";
 
 /** Explore (start cards, opt-in examples) and Library multi-select download. Isolated server + mock Kie.ai. */
 
@@ -28,7 +29,7 @@ test("start cards open the right page, model and helper", async ({ page }) => {
   await page.getByRole("link", { name: /^Product shot/ }).click();
   await expect(page).toHaveURL(/\/image$/);
   await expect(page.getByRole("button", { name: /^Model: Nano Banana Pro\./ }).filter({ visible: true })).toBeVisible({ timeout: 30_000 });
-  await expect(page.locator("#prompt").filter({ visible: true })).toHaveValue(/Clean studio product shot on a seamless backdrop/);
+  await expectPrompt(promptEditor(page), /Clean studio product shot on a seamless backdrop/);
 
   await resetDrafts(page);
   await page.goto("/");

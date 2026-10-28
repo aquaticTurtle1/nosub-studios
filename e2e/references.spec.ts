@@ -1,6 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { expect, type Locator, type Page, test } from "@playwright/test";
+import { expectPrompt, promptEditor, setPrompt } from "./prompt-helpers";
 
 /**
  * References on the Video page: drag & drop overlay, the shared add path, limits,
@@ -201,12 +202,12 @@ test.describe("draft survives a reload", () => {
     await (await chooser).setFiles({ name: f.name, mimeType: f.type, buffer: Buffer.from(f.b64, "base64") });
     await expect(thumbs(page)).toHaveCount(2);
     await expect(page.getByLabel("Saving")).toHaveCount(0);
-    await page.locator("textarea").first().fill("a red kite over the sea");
+    await setPrompt(promptEditor(page), "a red kite over the sea");
     await page.waitForTimeout(700); // draft save is debounced
 
     await page.reload();
     await expect(thumbs(page)).toHaveCount(2, { timeout: 30_000 });
-    await expect(page.locator("textarea").first()).toHaveValue("a red kite over the sea");
+    await expectPrompt(promptEditor(page), "a red kite over the sea", 30_000);
     await expect(page.getByTestId("resolved-model")).toContainText("image-to-video");
 
     // A file removed from data/uploads is dropped from the draft with a toast.
@@ -268,7 +269,7 @@ test.describe("what is sent", () => {
     await page.getByRole("button", { name: /^Add more references/ }).click();
     await page.getByRole("dialog").getByRole("button", { name: "sent-lib.png", exact: true }).click();
     await page.getByRole("dialog").getByRole("button", { name: "Add 1 reference" }).click();
-    await page.locator("textarea").first().fill("two stills, one motion");
+    await setPrompt(promptEditor(page), "two stills, one motion");
 
     await page.getByRole("button", { name: "Preview request" }).click();
     const preview = JSON.parse((await page.getByTestId("request-preview").textContent())!);

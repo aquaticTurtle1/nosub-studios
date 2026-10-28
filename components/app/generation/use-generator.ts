@@ -17,6 +17,7 @@ import { useStudio } from "@/components/studio/app-context";
 import { countFiles, defaultsFor, type FormValue, type FormValues, mapFiles } from "@/components/studio/form-values";
 import { notifyError } from "../notify";
 import type { ModeConfig } from "./mode-config";
+import { fmtCount } from "@/lib/ui/prompt-doc";
 import { probeMedia } from "./probe-media";
 
 /** A file from the local library (an upload or a finished generation). */
@@ -554,10 +555,15 @@ export function useGenerator(
 
   /** Chips → the model's token or words; the same function runs on the server at submit. */
   const promptInfo = useMemo(() => {
-    if (!layout || !variant) return { hint: null, problems: [] as string[] };
+    if (!layout || !variant) return { hint: null, problems: [] as string[], length: 0, limit: null, tooLong: null };
     const merged = mergeRefs(values as Record<string, unknown>, assigned.filter((r) => !r.saving), layout.refFields);
-    const { hint, problems } = serializePrompt(merged, variant.schema, model?.promptReferenceSyntax, promptRefs);
-    return { hint, problems };
+    const { input, hint, problems } = serializePrompt(merged, variant.schema, model?.promptReferenceSyntax, promptRefs);
+    // Counted as sent: chips are already the model's token or words.
+    const pf = layout.promptField;
+    const length = pf && typeof input[pf] === "string" ? (input[pf] as string).length : 0;
+    const limit = (pf && variant.schema.properties?.[pf]?.maxLength) || null;
+    const tooLong = limit && length > limit ? `The prompt is ${fmtCount(length)} characters; this model takes up to ${fmtCount(limit)}.` : null;
+    return { hint, problems, length, limit, tooLong };
   }, [layout, variant, values, assigned, model, promptRefs]);
 
   /**
@@ -601,6 +607,10 @@ export function useGenerator(
       }
       if (assigned.some((r) => r.saving)) {
         toast.error("References are still being saved.", { description: "Try again in a moment." });
+        return;
+      }
+      if (promptInfo.tooLong) {
+        toast.error(promptInfo.tooLong, { description: "Shorten it to generate." });
         return;
       }
       if (promptInfo.problems.length) {
@@ -759,6 +769,9 @@ export function useGenerator(
     accepts: acceptsInfo,
     promptHint: promptInfo.hint,
     promptProblems: promptInfo.problems,
+    promptLength: promptInfo.length,
+    promptLimit: promptInfo.limit,
+    promptTooLong: promptInfo.tooLong,
     setExtendMode,
     setConfirm,
     selectFamily,

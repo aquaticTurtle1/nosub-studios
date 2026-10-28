@@ -126,3 +126,18 @@
     scrollbar-color: var(--np-border-strong) transparent;
   }
 }
+
+/* Prompt editor (ProseMirror): the box around it shows focus; placeholder on the empty first line; selected chips. */
+.ProseMirror:focus-visible {
+  outline: none;
+}
+.ProseMirror p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  float: left;
+  height: 0;
+  color: var(--np-text-muted);
+  pointer-events: none;
+}
+.ProseMirror .np-chip.ProseMirror-selectednode {
+  outline: 2px solid var(--np-accent);
+}

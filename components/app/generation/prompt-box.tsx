@@ -1,49 +1,48 @@
 "use client";
 
-import { AudioLines } from "lucide-react";
-import { Fragment, useMemo, useRef, useState } from "react";
-import { CHIP_RE } from "@/lib/catalog/prompt-refs";
-import { applyPreset, PRESETS } from "@/lib/presets";
-import type { RefKind } from "@/lib/ui/fields";
+import { EditorContent, type Editor } from "@tiptap/react";
+import { AudioLines, Maximize2 } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import { PRESETS } from "@/lib/presets";
+import { fmtCount } from "@/lib/ui/prompt-doc";
 import { cn } from "@/lib/utils";
+import { type ChipRef, type Suggest, usePromptEditor } from "./prompt-editor";
 
-export interface ChipRef {
-  label: string;
-  kind: RefKind;
-  name: string;
-  preview: string;
-}
+export type { ChipRef } from "./prompt-editor";
 
-/** Every chip in the text with its [start, end) range. */
-function chipsIn(text: string) {
-  return [...text.matchAll(CHIP_RE)].map((m) => ({ label: m[0].slice(1), start: m.index!, end: m.index! + m[0].length }));
-}
+const HEIGHT_KEY = "studio.promptHeight";
+const MIN_HEIGHT = 96;
 
-/**
- * Edits the text through the browser's editing commands, so Ctrl+Z / Ctrl+Y undo it like typing.
- * Falls back to a plain value change where execCommand isn't available.
- */
-function edit(el: HTMLTextAreaElement, start: number, end: number, text: string, fallback: (v: string) => void) {
-  el.focus();
-  el.setSelectionRange(start, end);
-  const ok = typeof document.execCommand === "function" && document.execCommand(text ? "insertText" : "delete", false, text);
-  if (!ok) {
-    fallback(el.value.slice(0, start) + text + el.value.slice(end));
-    requestAnimationFrame(() => el.setSelectionRange(start + text.length, start + text.length));
+function readHeight(): number | null {
+  try {
+    const n = Number(localStorage.getItem(HEIGHT_KEY));
+    return n >= MIN_HEIGHT ? n : null;
+  } catch {
+    return null;
   }
 }
 
+function saveHeight(h: number | null) {
+  try {
+    if (h === null) localStorage.removeItem(HEIGHT_KEY);
+    else localStorage.setItem(HEIGHT_KEY, String(Math.round(h)));
+  } catch {}
+}
+
 /**
- * Prompt with reference chips. A chip is the text `@image_1` drawn as a pill (thumbnail +
- * label) by an overlay behind a transparent textarea — so paste stays plain text, undo/redo
- * and Ctrl+Enter work as usual, and the draft is a normal string. Chips act as one unit:
- * Backspace/Delete remove the whole chip and the caret can't stop inside one.
+ * Prompt with reference chips, in a rich-text editor where a chip is a real inline node:
+ * what you see is what you edit. Chips are atomic (Backspace removes the whole chip, the
+ * caret steps over it), paste is plain text, undo/redo work as usual and Ctrl+Enter
+ * generates. The value is still the plain prompt string with `@image_1` for each chip.
  */
 export function PromptBox({
   value,
   onChange,
   placeholder,
-  maxLength,
+  length,
+  limit,
   refs,
   presetMode,
   invalid,
@@ -53,7 +52,9 @@ export function PromptBox({
   value: string;
   onChange: (v: string) => void;
   placeholder: string;
-  maxLength?: number;
+  /** Characters as sent (chips already replaced), and the model's documented limit. */
+  length: number;
+  limit: number | null;
   /** Attached references the prompt can point at. */
   refs: ChipRef[];
   presetMode: "image" | "video" | null;
@@ -62,230 +63,79 @@ export function PromptBox({
   /** How chips are sent to this model, when not by name. */
   hint?: string | null;
 }) {
-  const ta = useRef<HTMLTextAreaElement>(null);
-  const overlay = useRef<HTMLDivElement>(null);
-  const lastCaret = useRef(0);
-  const [query, setQuery] = useState<{ text: string; start: number } | null>(null);
-  const [active, setActive] = useState(0);
-  const [hover, setHover] = useState<{ label: string; x: number; y: number } | null>(null);
+  const { editor, suggest, insertAtCaret } = usePromptEditor({ value, onChange, refs, placeholder });
+  const [focusOpen, setFocusOpen] = useState(false);
+  const [height, setHeight] = useState<number | null>(null);
   const presets = useMemo(() => (presetMode ? PRESETS.filter((p) => p.modes.includes(presetMode)) : []), [presetMode]);
-  const byLabel = useMemo(() => new Map(refs.map((r) => [r.label, r])), [refs]);
-  const matches = query === null ? [] : refs.filter((r) => r.label.startsWith(query.text));
 
-  function syncQuery(el: HTMLTextAreaElement) {
-    const pos = el.selectionStart;
-    const m = el.value.slice(0, pos).match(/(^|\s)@(\w*)$/);
-    setQuery(m && refs.length ? { text: m[2], start: pos - m[2].length - 1 } : null);
-    setActive(0);
-  }
+  // eslint-disable-next-line react-hooks/set-state-in-effect -- stored per browser, read after hydration
+  useEffect(() => setHeight(readHeight()), []);
 
-  function insert(label: string) {
-    const el = ta.current!;
-    if (!query) return;
-    edit(el, query.start, el.selectionStart, `@${label} `, onChange);
-    setQuery(null);
-  }
-
-  /** Keeps the caret out of chips: it jumps to the side it was moving toward. */
-  function snapCaret(el: HTMLTextAreaElement) {
-    if (el.selectionStart !== el.selectionEnd) return;
-    const pos = el.selectionStart;
-    const c = chipsIn(el.value).find((x) => pos > x.start && pos < x.end);
-    const to = c ? (lastCaret.current >= c.end ? c.start : c.end) : pos;
-    if (to !== pos) el.setSelectionRange(to, to);
-    lastCaret.current = to;
-  }
-
-  function onKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
-    const el = e.currentTarget;
-    if (matches.length && !e.ctrlKey && !e.metaKey) {
-      if (e.key === "ArrowDown" || e.key === "ArrowUp") {
-        e.preventDefault();
-        setActive((a) => (a + (e.key === "ArrowDown" ? 1 : matches.length - 1)) % matches.length);
-        return;
-      }
-      if (e.key === "Enter" || e.key === "Tab") {
-        e.preventDefault();
-        insert(matches[active].label);
-        return;
-      }
-      if (e.key === "Escape") {
-        e.preventDefault();
-        setQuery(null);
-        return;
-      }
-    }
-    // A chip is one unit: Backspace right after it (or Delete right before it) removes all of it.
-    if ((e.key === "Backspace" || e.key === "Delete") && el.selectionStart === el.selectionEnd) {
-      const pos = el.selectionStart;
-      const c = chipsIn(el.value).find((x) => (e.key === "Backspace" ? pos > x.start && pos <= x.end : pos >= x.start && pos < x.end));
-      if (c) {
-        e.preventDefault();
-        edit(el, c.start, c.end, "", onChange);
-      }
-    }
-  }
-
-  function onMouseMove(e: React.MouseEvent) {
-    const spans = overlay.current?.querySelectorAll<HTMLElement>("[data-chip]") ?? [];
-    for (const s of spans) {
-      for (const r of s.getClientRects()) {
-        if (e.clientX >= r.left && e.clientX <= r.right && e.clientY >= r.top && e.clientY <= r.bottom) {
-          if (hover?.label !== s.dataset.chip) setHover({ label: s.dataset.chip!, x: r.left, y: r.bottom });
-          return;
-        }
-      }
-    }
-    if (hover) setHover(null);
-  }
-
-  const parts = useMemo(() => {
-    const out: { text: string; chip?: string }[] = [];
-    let at = 0;
-    for (const c of chipsIn(value)) {
-      if (c.start > at) out.push({ text: value.slice(at, c.start) });
-      out.push({ text: value.slice(c.start, c.end), chip: c.label });
-      at = c.end;
-    }
-    out.push({ text: value.slice(at) + "\n" });
-    return out;
-  }, [value]);
-
-  const box = "px-3 py-2.5 text-sm leading-5 whitespace-pre-wrap break-words";
-  const hovered = hover ? byLabel.get(hover.label) : undefined;
+  const counter = (
+    <span
+      data-testid="prompt-counter"
+      className={cn(
+        "shrink-0 text-xs tabular-nums",
+        limit && length > limit ? "text-np-danger" : limit && length >= limit * 0.9 ? "text-np-warning" : "text-np-text-muted",
+      )}
+    >
+      {fmtCount(length)}
+      {limit ? ` / ${fmtCount(limit)}` : length === 1 ? " character" : " characters"}
+    </span>
+  );
 
   return (
     <section className="grid gap-2">
-      <label htmlFor="prompt" className="text-xs font-medium text-np-text-secondary">
+      <span id="prompt-label" className="text-xs font-medium text-np-text-secondary">
         Prompt
-      </label>
-      <div className={cn("relative rounded-np-md bg-np-bg-2", invalid && "outline-1 outline-np-danger", compact && "max-lg:h-[72px]")}>
-        {/* What you see: the text with chips. The textarea on top only takes input. */}
-        <div ref={overlay} aria-hidden className={cn("pointer-events-none absolute inset-0 overflow-hidden text-np-text-primary", box)} data-testid="prompt-overlay">
-          {parts.map((p, i) => {
-            if (!p.chip) return <Fragment key={i}>{p.text}</Fragment>;
-            const ref = byLabel.get(p.chip);
-            return (
-              <span
-                key={i}
-                data-chip={p.chip}
-                data-missing={!ref || undefined}
-                className={cn(
-                  "rounded-np-sm",
-                  ref
-                    ? "bg-np-accent-soft text-np-accent-text shadow-[0_0_0_2px_var(--np-accent-soft)]"
-                    : "bg-np-warning-soft text-np-warning line-through shadow-[0_0_0_2px_var(--np-warning-soft)]",
-                )}
-              >
-                {ref ? (
-                  <span className="relative">
-                    <span className="invisible">@</span>
-                    <ChipThumb r={ref} className="absolute top-1/2 left-0 size-3.5 -translate-y-1/2 rounded-[3px]" />
-                  </span>
-                ) : (
-                  "@"
-                )}
-                {p.chip}
-              </span>
-            );
-          })}
-        </div>
-        <textarea
-          id="prompt"
-          ref={ta}
-          value={value}
-          maxLength={maxLength}
-          placeholder={placeholder}
-          rows={6}
-          spellCheck={false}
-          onChange={(e) => {
-            onChange(e.target.value);
-            syncQuery(e.target);
-          }}
-          onKeyDown={onKeyDown}
-          onSelect={(e) => snapCaret(e.currentTarget)}
-          onScroll={(e) => {
-            if (overlay.current) overlay.current.scrollTop = e.currentTarget.scrollTop;
-          }}
-          onMouseMove={onMouseMove}
-          onMouseLeave={() => setHover(null)}
-          onBlur={() => setTimeout(() => setQuery(null), 120)}
-          className={cn(
-            "relative block w-full resize-none rounded-np-md bg-transparent text-transparent caret-np-text-primary selection:bg-np-accent-soft selection:text-transparent placeholder:text-np-text-muted focus:outline-none focus-visible:outline-2 focus-visible:outline-np-focus-ring",
-            box,
-            compact && "max-lg:h-[72px]",
-          )}
-          aria-autocomplete={refs.length ? "list" : undefined}
-          aria-describedby={hint ? "prompt-hint" : undefined}
-        />
-        {matches.length > 0 && (
-          <ul
-            role="listbox"
-            aria-label="Attached references"
-            className="absolute bottom-full left-2 z-20 mb-1 grid min-w-48 gap-0.5 rounded-np-md bg-np-bg-3 p-1 shadow-np-popover"
-          >
-            {matches.map((r, i) => (
-              <li key={r.label}>
-                <button
-                  type="button"
-                  role="option"
-                  aria-selected={i === active}
-                  onMouseDown={(e) => {
-                    e.preventDefault();
-                    insert(r.label);
-                  }}
-                  className={cn("flex w-full items-center gap-2 rounded-np-sm px-1.5 py-1 text-left text-sm", i === active && "bg-np-bg-2")}
-                >
-                  <ChipThumb r={r} className="size-7 shrink-0 rounded-np-sm" />
-                  <span className={cn("font-medium", i === active && "text-np-accent-text")}>{r.label}</span>
-                  <span className="min-w-0 truncate text-xs text-np-text-muted">{r.name}</span>
-                </button>
-              </li>
-            ))}
-          </ul>
-        )}
-        {hover && (
-          <div
-            role="tooltip"
-            className="pointer-events-none fixed z-50 mt-1.5 overflow-hidden rounded-np-md bg-np-bg-3 p-1 shadow-np-popover"
-            style={{ left: hover.x, top: hover.y }}
-          >
-            {hovered ? (
-              <>
-                <ChipThumb r={hovered} className="size-32 rounded-np-sm" />
-                <span className="block max-w-32 truncate px-0.5 pt-1 text-[11px] text-np-text-secondary">{hovered.name}</span>
-              </>
-            ) : (
-              <span className="block px-1.5 py-1 text-xs text-np-warning">{hover.label} is no longer attached</span>
+      </span>
+      <div className={cn("relative rounded-np-md bg-np-bg-2", invalid && "outline-1 outline-np-danger")}>
+        {focusOpen ? (
+          <p className="flex min-h-24 items-center justify-center px-3 text-sm text-np-text-muted">Editing in the focus view</p>
+        ) : (
+          <EditorFrame
+            editor={editor}
+            suggest={suggest}
+            refs={refs}
+            style={height ? ({ "--prompt-h": `${height}px` } as React.CSSProperties) : undefined}
+            className={cn(
+              "min-h-[var(--prompt-h,260px)] max-h-[max(var(--prompt-h,260px),50dvh)] pr-8 text-sm leading-5",
+              compact && "max-lg:h-[72px] max-lg:min-h-0",
             )}
-          </div>
+          />
         )}
-        {maxLength && value.length > maxLength * 0.8 && (
-          <span className="absolute right-2 bottom-2 text-[11px] text-np-text-muted">
-            {value.length}/{maxLength}
-          </span>
-        )}
+        <button
+          type="button"
+          onClick={() => setFocusOpen(true)}
+          aria-label="Expand prompt"
+          title="Expand prompt"
+          className="absolute top-1.5 right-1.5 flex size-7 items-center justify-center rounded-np-sm text-np-text-muted transition-colors duration-150 hover:bg-np-bg-3 hover:text-np-text-primary"
+        >
+          <Maximize2 className="size-3.5" aria-hidden />
+        </button>
+        {!focusOpen && <ResizeHandle height={height} onHeight={setHeight} className={cn(compact && "max-lg:hidden")} />}
       </div>
-      {hint && (
-        <p id="prompt-hint" className="text-xs text-np-text-muted" data-testid="prompt-hint">
-          {hint}
-        </p>
-      )}
-      {refs.length > 0 && !hint && !compact && <p className="text-xs text-np-text-muted">Type @ to point at a reference.</p>}
+      <div className="flex items-start gap-3">
+        <div className="min-w-0 flex-1">
+          {hint ? (
+            <p id="prompt-hint" className="text-xs text-np-text-muted" data-testid="prompt-hint">
+              {hint}
+            </p>
+          ) : (
+            refs.length > 0 && !compact && <p className="text-xs text-np-text-muted">Type @ to point at a reference.</p>
+          )}
+        </div>
+        {counter}
+      </div>
       {presets.length > 0 && (
         <div className={cn("grid gap-1.5", compact && "max-lg:hidden")}>
-          <span className="text-xs text-np-text-muted">Prompt helpers add a phrase to your prompt</span>
+          <span className="text-xs text-np-text-muted">Prompt helpers add a phrase where your cursor is</span>
           <div className="flex flex-wrap gap-1.5">
             {presets.map((p) => (
               <button
                 key={p.id}
                 type="button"
-                onClick={() => {
-                  // Through the editing commands, so the helper can be undone.
-                  const el = ta.current;
-                  if (el) edit(el, 0, el.value.length, applyPreset(value, p), onChange);
-                  else onChange(applyPreset(value, p));
-                }}
+                onClick={() => !value.includes(p.phrase) && insertAtCaret(p.phrase, true)}
                 title={p.phrase}
                 className="h-8 shrink-0 rounded-np-md bg-np-bg-2 px-3 text-[13px] text-np-text-secondary transition-colors duration-150 hover:bg-np-bg-3 hover:text-np-text-primary"
               >
@@ -295,7 +145,208 @@ export function PromptBox({
           </div>
         </div>
       )}
+      <Dialog open={focusOpen} onOpenChange={setFocusOpen}>
+        <DialogContent
+          showCloseButton={false}
+          initialFocus={() => {
+            editor?.commands.focus();
+            return editor?.view.dom ?? true;
+          }}
+          className={cn(
+            "flex h-[85dvh] max-h-none w-[90vw] max-w-none flex-col gap-0 overflow-hidden bg-np-bg-1 p-0 sm:max-w-none",
+            "max-sm:h-dvh max-sm:w-screen max-sm:rounded-none",
+          )}
+        >
+          <div className="flex items-center gap-3 border-b border-np-border-subtle px-5 py-3">
+            <DialogTitle className="font-display text-base font-semibold">Prompt</DialogTitle>
+            <span className="ml-auto">{counter}</span>
+          </div>
+          <div className="flex min-h-0 flex-1 max-md:flex-col">
+            {/* The same editor, moved here: one document, one undo history. */}
+            {focusOpen && (
+              <EditorFrame
+                editor={editor}
+                suggest={suggest}
+                refs={refs}
+                className="h-full text-[15px] leading-6 [&_.ProseMirror]:px-6 [&_.ProseMirror]:py-5"
+                frameClassName="min-h-0 flex-1"
+              />
+            )}
+            {refs.length > 0 && (
+              <aside aria-label="References" className="np-scroll grid shrink-0 content-start gap-1 overflow-y-auto border-np-border-subtle p-3 md:w-60 md:border-l max-md:max-h-32 max-md:border-t">
+                <span className="px-1 pb-1 text-xs text-np-text-muted">Click to add to the prompt</span>
+                {refs.map((r) => (
+                  <button
+                    key={r.label}
+                    type="button"
+                    onMouseDown={(e) => e.preventDefault()}
+                    onClick={() => insertAtCaret(`@${r.label}`)}
+                    aria-label={`Insert ${r.label}`}
+                    className="flex items-center gap-2 rounded-np-sm p-1.5 text-left text-sm hover:bg-np-bg-2"
+                  >
+                    <ChipThumb r={r} className="size-10 shrink-0 rounded-np-sm" />
+                    <span className="grid min-w-0">
+                      <span className="font-medium text-np-accent-text">{r.label}</span>
+                      <span className="truncate text-xs text-np-text-muted">{r.name}</span>
+                    </span>
+                  </button>
+                ))}
+              </aside>
+            )}
+          </div>
+          <div className="flex items-center justify-end gap-2 border-t border-np-border-subtle px-5 py-3">
+            <span className="mr-auto text-xs text-np-text-muted">Esc closes · Ctrl+Enter generates</span>
+            <Button onClick={() => setFocusOpen(false)}>Done</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </section>
+  );
+}
+
+/** The editor surface with its @ picker and chip previews. */
+function EditorFrame({
+  editor,
+  suggest,
+  refs,
+  className,
+  frameClassName,
+  style,
+}: {
+  editor: Editor | null;
+  suggest: Suggest | null;
+  refs: ChipRef[];
+  className?: string;
+  frameClassName?: string;
+  style?: React.CSSProperties;
+}) {
+  const [frame, setFrame] = useState<HTMLDivElement | null>(null);
+  const [hover, setHover] = useState<{ label: string; x: number; y: number } | null>(null);
+  const at = (r: DOMRect) => {
+    const f = frame!.getBoundingClientRect();
+    return { x: Math.max(0, Math.min(r.left - f.left, f.width - 208)), top: r.top - f.top, bottom: r.bottom - f.top };
+  };
+  const pos = suggest?.rect && frame ? at(suggest.rect) : null;
+  const hovered = hover ? refs.find((r) => r.label === hover.label) : undefined;
+
+  return (
+    <div
+      ref={setFrame}
+      className={cn("relative", frameClassName)}
+      onMouseOver={(e) => {
+        const chip = (e.target as HTMLElement).closest<HTMLElement>("[data-chip]");
+        if (!chip) return hover && setHover(null);
+        if (hover?.label === chip.dataset.chip) return;
+        const p = at(chip.getBoundingClientRect());
+        setHover({ label: chip.dataset.chip!, x: p.x, y: p.bottom });
+      }}
+      onMouseLeave={() => setHover(null)}
+    >
+      <EditorContent
+        editor={editor}
+        style={style}
+        data-testid="prompt-editor"
+        className={cn(
+          "np-scroll grid cursor-text overflow-y-auto rounded-np-md text-np-text-primary focus-within:outline-2 focus-within:outline-np-focus-ring",
+          className,
+        )}
+      />
+      {suggest && pos && (
+        <ul
+          role="listbox"
+          aria-label="Attached references"
+          className="absolute z-20 grid w-52 gap-0.5 rounded-np-md bg-np-bg-3 p-1 shadow-np-popover"
+          style={{ left: pos.x, bottom: `calc(100% - ${pos.top - 4}px)` }}
+        >
+          {suggest.items.map((r, i) => (
+            <li key={r.label}>
+              <button
+                type="button"
+                role="option"
+                aria-selected={i === suggest.active}
+                onMouseDown={(e) => {
+                  e.preventDefault();
+                  suggest.pick(r);
+                }}
+                className={cn("flex w-full items-center gap-2 rounded-np-sm px-1.5 py-1 text-left text-sm", i === suggest.active && "bg-np-bg-2")}
+              >
+                <ChipThumb r={r} className="size-7 shrink-0 rounded-np-sm" />
+                <span className={cn("font-medium", i === suggest.active && "text-np-accent-text")}>{r.label}</span>
+                <span className="min-w-0 truncate text-xs text-np-text-muted">{r.name}</span>
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+      {hover && (
+        <div
+          role="tooltip"
+          className="pointer-events-none absolute z-30 mt-1.5 overflow-hidden rounded-np-md bg-np-bg-3 p-1 shadow-np-popover"
+          style={{ left: hover.x, top: hover.y }}
+        >
+          {hovered ? (
+            <>
+              <ChipThumb r={hovered} className="size-32 rounded-np-sm" />
+              <span className="block max-w-32 truncate px-0.5 pt-1 text-[11px] text-np-text-secondary">{hovered.name}</span>
+            </>
+          ) : (
+            <span className="block px-1.5 py-1 text-xs whitespace-nowrap text-np-warning">{hover.label} is no longer attached</span>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/** Drag (or arrow keys) to set the box height; double-click goes back to the default. */
+function ResizeHandle({ height, onHeight, className }: { height: number | null; onHeight: (h: number | null) => void; className?: string }) {
+  const el = useRef<HTMLDivElement>(null);
+  const box = () => el.current?.parentElement?.querySelector<HTMLElement>("[data-testid=prompt-editor]");
+  const clamp = (h: number) => Math.round(Math.min(Math.max(h, MIN_HEIGHT), window.innerHeight * 0.85));
+  const set = (h: number | null) => {
+    onHeight(h);
+    saveHeight(h);
+  };
+  return (
+    <div
+      ref={el}
+      role="separator"
+      aria-orientation="horizontal"
+      aria-label="Resize prompt"
+      aria-valuenow={height ?? undefined}
+      tabIndex={0}
+      title="Drag to resize"
+      onPointerDown={(e) => {
+        const start = box()?.getBoundingClientRect().height ?? 260;
+        const y0 = e.clientY;
+        e.currentTarget.setPointerCapture(e.pointerId);
+        let h = start;
+        const move = (ev: PointerEvent) => {
+          h = clamp(start + ev.clientY - y0);
+          onHeight(h);
+        };
+        const up = () => {
+          window.removeEventListener("pointermove", move);
+          window.removeEventListener("pointerup", up);
+          saveHeight(h);
+        };
+        window.addEventListener("pointermove", move);
+        window.addEventListener("pointerup", up);
+        e.preventDefault();
+      }}
+      onDoubleClick={() => set(null)}
+      onKeyDown={(e) => {
+        if (e.key !== "ArrowUp" && e.key !== "ArrowDown") return;
+        e.preventDefault();
+        set(clamp((height ?? box()?.offsetHeight ?? 260) + (e.key === "ArrowDown" ? 24 : -24)));
+      }}
+      className={cn(
+        "group absolute inset-x-0 -bottom-1 flex h-3 cursor-ns-resize touch-none items-center justify-center rounded-np-sm outline-none focus-visible:outline-2 focus-visible:outline-np-focus-ring",
+        className,
+      )}
+    >
+      <span className="h-1 w-10 rounded-np-full bg-np-border-strong opacity-60 transition-opacity duration-150 group-hover:opacity-100" />
+    </div>
   );
 }
 

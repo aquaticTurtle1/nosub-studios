@@ -193,7 +193,8 @@ export function ControlPanel({
                 value={(g.values[layout.promptField] as string) ?? ""}
                 onChange={(v) => g.setValue(layout.promptField!, v)}
                 placeholder={mode.promptPlaceholder}
-                maxLength={g.variant?.schema.properties?.[layout.promptField]?.maxLength}
+                length={g.promptLength}
+                limit={g.promptLimit}
                 refs={g.refs.map((r) => ({ label: r.label, kind: r.kind, name: r.name, preview: r.preview }))}
                 hint={g.promptHint}
                 presetMode={mode.presets ? (mode.id as "image" | "video") : null}
@@ -368,7 +369,18 @@ export function ControlPanel({
             <ChevronUp className="ml-auto size-3.5 shrink-0" aria-hidden />
           </button>
         )}
-        <Button size="lg" className="w-full shadow-np-accent" aria-busy={busy} onClick={() => void g.submit(false)}>
+        {g.promptTooLong && (
+          <p role="alert" data-testid="prompt-too-long" className="mb-2 text-xs text-np-danger">
+            {g.promptTooLong} Shorten it to generate.
+          </p>
+        )}
+        <Button
+          size="lg"
+          className="w-full shadow-np-accent"
+          aria-busy={busy}
+          disabled={Boolean(g.promptTooLong)}
+          onClick={() => void g.submit(false)}
+        >
           {busy ? <Loader2 className="animate-spin" /> : <Wand2 />}
           <span>
             {g.phase === "uploading" ? "Uploading references…" : g.phase === "submitting" ? "Submitting…" : "Generate"}
