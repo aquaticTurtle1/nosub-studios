@@ -1,0 +1,456 @@
+# Generate Persona
+
+## OpenAPI Specification
+
+```yaml
+openapi: 3.0.1
+info:
+  title: ''
+  description: ''
+  version: 1.0.0
+paths:
+  /api/v1/jobs/createTask:
+    post:
+      summary: Generate Persona
+      deprecated: false
+      description: >-
+        :::warning Document updated
+
+        If you have already completed the integration process previously, you
+        can still access the old version document at: Old version address
+        (https://docs.kie.ai/old-model/suno-api/generate-persona)
+
+        :::
+
+        > Create a personalized music Persona based on generated music, giving
+        the music a unique identity and characteristics.
+
+
+        ## Usage Guide
+
+
+        Use this endpoint to create Personas (music characters) for generated
+        music:
+
+        * Requires the `task_id` from music generation related endpoints
+        (generate, extend) and audio ID
+
+        * Customize the Persona name and description to give music unique
+        personality
+
+        * Generated Personas can be used for subsequent music creation and style
+        transfer
+
+
+        ## Parameter Details
+
+
+        *   **`task_id`** (Required): Can be obtained from the following
+        endpoints:
+            *   Generate Music
+            *   Extend Music
+        *   **`audio_id`** (Required): Specifies the audio ID to create Persona
+        for
+
+        *   **`name`** (Required): Assigns an easily recognizable name to the
+        Persona
+
+        *   **`description`** (Required): Describes the Persona's musical
+        characteristics, style, and personality
+
+
+        ## Developer Notes
+
+
+        :::caution Important Requirements
+
+        *   **Ensure the music generation task is fully completed** before
+        calling this endpoint. If the music is still generating, this endpoint
+        will return a failure.
+
+        *   Each audio ID can only generate a Persona **once**.
+
+        :::
+
+
+        *   It is recommended to provide detailed descriptions for Personas to
+        better capture musical characteristics.
+
+        *   The returned `persona_id` can be used in subsequent music generation
+        requests to create music with similar style characteristics.
+
+        *   You can apply the `persona_id` to the following endpoints:
+            *   Generate Music
+            *   Extend Music
+
+        ## Parameter Example
+
+
+        ```json
+
+        {
+          "task_id": "5c79****be8e",
+          "audio_id": "e231****-****-****-****-****8cadc7dc",
+          "name": "Electronic Pop Singer",
+          "description": "A modern electronic music style pop singer, skilled in dynamic rhythms and synthesizer tones"
+        }
+
+        ```
+
+
+        :::note
+
+        Ensure that the music generation task corresponding to the `task_id` is
+        complete and the `audio_id` is within the valid range.
+
+        :::
+
+
+        :::tip
+
+        Providing detailed and specific descriptions for Personas helps the
+        system more accurately capture musical style characteristics.
+
+        :::
+      operationId: generate-persona
+      tags:
+        - docs/en/Market/Music Models/Suno/Music Generation
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - model
+                - input
+              properties:
+                model:
+                  type: string
+                  description: The model name to use for generation. Required field.
+                  examples:
+                    - ai-music-api/generate-persona
+                callBackUrl:
+                  type: string
+                  description: >-
+                    The URL to receive generation task completion updates.
+                    Optional but recommended for production use.
+
+
+                    - System will POST task status and results to this URL when
+                    generation completes
+
+                    - Callback includes generated content URLs and task
+                    information
+
+                    - Your callback endpoint should accept POST requests with
+                    JSON payload containing results
+
+                    - Alternatively, poll GET /api/v1/jobs/recordInfo?taskId=...
+                    (see [Get Task Details](/market/common/get-task-detail)).
+
+                    - To ensure callback security, see [Webhook Verification
+                    Guide](/common-api/webhook-verification) for signature
+                    verification implementation
+                  format: uri
+                input:
+                  type: object
+                  description: Input parameters for the generation task
+                  properties:
+                    task_id:
+                      type: string
+                      description: >-
+                        Unique identifier of the original music generation task.
+                        Generated by model ai-music-api/generate or
+                        ai-music-api/extend.
+                      examples:
+                        - 5c79****be8e
+                    audio_id:
+                      type: string
+                      description: >-
+                        Unique identifier of the audio track to create Persona
+                        for. This ID is returned in the callBackUrl data after
+                        music generation completes.
+                      examples:
+                        - e231****-****-****-****-****8cadc7dc
+                    name:
+                      type: string
+                      description: >-
+                        Name for the Persona. A descriptive name that captures
+                        the essence of the musical style or character.
+                      examples:
+                        - Electronic Pop Singer
+                    description:
+                      type: string
+                      description: >-
+                        Detailed description of the Persona's musical
+                        characteristics, style, and personality. Be specific
+                        about genre, mood, instrumentation, and vocal qualities.
+                      examples:
+                        - >-
+                          A modern electronic music style pop singer, skilled in
+                          dynamic rhythms and synthesizer tones
+                    vocal_start:
+                      type: number
+                      description: >-
+                        Start time (in seconds) for Persona analysis segment
+                        extraction. Used to specify the time point in the audio
+                        from which to extract the segment for Persona analysis.
+                        Must be less than vocal_end, and vocal_end - vocal_start
+                        must be between 10–30 seconds. Defaults to 0.0.
+                      default: 0
+                      examples:
+                        - 12.5
+                      minimum: 0
+                    vocal_end:
+                      type: number
+                      description: >-
+                        End time (in seconds) for Persona analysis segment
+                        extraction. Together with vocal_start, used to specify
+                        the time range for analysis. vocal_end - vocal_start
+                        must be between 10–30 seconds. Defaults to 30.0.
+                      multipleOf: 0.01
+                      default: 30
+                      examples:
+                        - 25.8
+                      minimum: 0
+                    style:
+                      type: string
+                      description: >-
+                        Optional. Used to supplement the description of the
+                        music style tag corresponding to the Persona, such as
+                        "Electronic Pop", "Jazz Trio", etc.
+                  required:
+                    - task_id
+                    - audio_id
+                    - name
+                    - description
+                  x-apidog-orders:
+                    - task_id
+                    - audio_id
+                    - name
+                    - description
+                    - vocal_start
+                    - vocal_end
+                    - style
+                  x-apidog-ignore-properties: []
+              x-apidog-orders:
+                - model
+                - callBackUrl
+                - input
+              x-apidog-ignore-properties: []
+            example:
+              model: ai-music-api/generate-persona
+              callBackUrl: https://api.example.com/callback
+              input:
+                task_id: 5c79****be8e
+                audio_id: e231****-****-****-****-****8cadc7dc
+                name: Electronic Pop Singer
+                description: >-
+                  A modern electronic music style pop singer, skilled in dynamic
+                  rhythms and synthesizer tones
+                vocal_start: 0
+                vocal_end: 30
+                style: Electronic Pop
+      responses:
+        '200':
+          description: Request successful
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - type: object
+                    properties:
+                      code:
+                        type: integer
+                        enum:
+                          - 200
+                          - 401
+                          - 402
+                          - 404
+                          - 409
+                          - 422
+                          - 429
+                          - 451
+                          - 455
+                          - 500
+                        description: >-
+                          Status code of the request. The HTTP status is 200
+                          even when the request fails, so always check this
+                          field: 200 means success; any other value means the
+                          request failed and msg describes the reason. Common
+                          values: 401 invalid or missing API key; 402
+                          insufficient credits; 429 rate limit exceeded; 422 or
+                          500 the request could not be processed (read msg and
+                          check your parameters before retrying).
+                      msg:
+                        type: string
+                        description: Error message when code != 200
+                        examples:
+                          - success
+                    x-apidog-orders:
+                      - code
+                      - msg
+                    x-apidog-ignore-properties: []
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          persona_id:
+                            type: string
+                            description: >-
+                              Unique identifier for the generated Persona. This
+                              persona_id can be used in subsequent music
+                              generation requests (Generate Music, Extend Music,
+                              Upload And Cover Audio, Upload And Extend Audio)
+                              to create music with similar style
+                              characteristics.
+                            examples:
+                              - a1b2****c3d4
+                          name:
+                            type: string
+                            description: Name of the Persona as provided in the request.
+                            examples:
+                              - Electronic Pop Singer
+                          description:
+                            type: string
+                            description: >-
+                              Description of the Persona's musical
+                              characteristics, style, and personality as
+                              provided in the request.
+                            examples:
+                              - >-
+                                A modern electronic music style pop singer,
+                                skilled in dynamic rhythms and synthesizer tones
+                        x-apidog-orders:
+                          - persona_id
+                          - name
+                          - description
+                        x-apidog-ignore-properties: []
+                    x-apidog-orders:
+                      - data
+                    x-apidog-ignore-properties: []
+          headers: {}
+          x-apidog-name: ''
+        '500':
+          description: Server error.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    description: >-
+                      Response status code
+
+
+                      - **200**: Success - Request has been processed
+                      successfully
+
+                      - **401**: Unauthorized - Authentication credentials are
+                      missing or invalid
+
+                      - **402**: Insufficient Credits - Account does not have
+                      enough credits to perform the operation
+
+                      - **404**: Not Found - The requested resource or endpoint
+                      does not exist
+
+                      - **408**: Timeout - No result has been returned for over
+                      10 minutes.
+
+                      - **422**: Validation Error - The request parameters
+                      failed validation checks
+
+                      - **429**: Rate Limited - Request limit has been exceeded
+                      for this resource
+
+                      - **455**: Service Unavailable - System is currently
+                      undergoing maintenance
+
+                      - **500**: Server Error - An unexpected error occurred
+                      while processing the request
+
+                      - **501**: Generation Failed - Content generation task
+                      failed
+
+                      - **505**: Feature Disabled - The requested feature is
+                      currently disabled
+                  msg:
+                    type: string
+                    description: Response message, error description when failed
+                  data:
+                    type: object
+                    properties: {}
+                    x-apidog-orders: []
+                    x-apidog-ignore-properties: []
+                x-apidog-orders:
+                  - code
+                  - msg
+                  - data
+                required:
+                  - code
+                  - msg
+                  - data
+                x-apidog-ignore-properties: []
+              example:
+                code: 500
+                msg: >-
+                  Server Error - An unexpected error occurred while processing
+                  the request
+                data: null
+          headers: {}
+          x-apidog-name: Error
+      security:
+        - BearerAuth: []
+          x-apidog:
+            schemeGroups:
+              - id: kn8M4YUlc5i0A0179ezwx
+                schemeIds:
+                  - BearerAuth
+            required: true
+            use:
+              id: kn8M4YUlc5i0A0179ezwx
+            scopes:
+              kn8M4YUlc5i0A0179ezwx:
+                BearerAuth: []
+      x-apidog-folder: docs/en/Market/Music Models/Suno/Music Generation
+      x-apidog-status: released
+      x-run-in-apidog: https://app.apidog.com/web/project/1184766/apis/api-43206431-run
+components:
+  schemas: {}
+  securitySchemes:
+    BearerAuth:
+      type: bearer
+      scheme: bearer
+      bearerFormat: API Key
+      description: >-
+        All API requests require a Bearer Token. Add the header `Authorization:
+        Bearer YOUR_API_KEY` to authenticate requests.
+    BearerAuth1:
+      type: bearer
+      scheme: bearer
+      bearerFormat: API Key
+      description: >-
+        所有 API 请求都需要 Bearer Token。请在请求头中添加 `Authorization: Bearer YOUR_API_KEY`
+        进行身份验证。
+servers:
+  - url: https://api.kie.ai
+    description: 正式环境
+security:
+  - BearerAuth: []
+    x-apidog:
+      schemeGroups:
+        - id: kn8M4YUlc5i0A0179ezwx
+          schemeIds:
+            - BearerAuth
+      required: true
+      use:
+        id: kn8M4YUlc5i0A0179ezwx
+      scopes:
+        kn8M4YUlc5i0A0179ezwx:
+          BearerAuth: []
+
+```
