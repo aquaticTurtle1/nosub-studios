@@ -73,13 +73,37 @@ export interface CatalogModel {
   summary: string;
   /** Docs state "This endpoint is free." */
   free: boolean;
+  /** How a prompt names a specific reference, per the Kie docs. Absent for models without references. */
+  promptReferenceSyntax?: PromptReferenceSyntax;
 }
+
+/**
+ * How a prompt points at one reference. `format` placeholders: `{kind}` (image/video/audio),
+ * `{Kind}` (capitalized), `{n}` (position, starting at `indexBase`), `{name}` (the reference's
+ * label, sent in `nameField` of each item). Taken from the docs only — never guessed.
+ */
+export type PromptReferenceSyntax =
+  | {
+      kind: "token";
+      format: string;
+      indexBase: 0 | 1;
+      source: string;
+      /** Fields the numbering covers (default: every reference field), in the order they are sent. */
+      fields?: string[];
+      /** Field-specific tokens (Kling 4.0 Keyframes: `@first_frame`, `@keyframe_{n}`). */
+      fieldFormats?: Record<string, string>;
+      /** Item property that carries the reference's name (PixVerse `ref_name`). */
+      nameField?: string;
+      /** Caveat, e.g. the syntax appears only in an example prompt. */
+      note?: string;
+    }
+  | { kind: "none"; unverified?: boolean };
 
 /** Lightweight entry for pickers (the full schema is fetched per model). */
 export type CatalogSummary = Pick<
   CatalogModel,
-  "key" | "modelId" | "title" | "provider" | "family" | "category" | "operation" | "issues" | "free"
->;
+  "key" | "modelId" | "title" | "provider" | "family" | "category" | "operation" | "issues" | "free" | "promptReferenceSyntax"
+> & { meta: import("./meta").ModelMeta };
 
 export interface Catalog {
   generatedAt: string;

@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Studio redesign · before and after</title>
+    <!-- Same tokens as the app, so this page is themed like it. Open the file directly in a browser. -->
+    <link rel="stylesheet" href="../app/neon-pink-tokens.css" />
+    <style>
+      body {
+        margin: 0;
+        background: var(--np-bg-0);
+        color: var(--np-text-primary);
+        font: 14px/20px system-ui, sans-serif;
+      }
+      main {
+        max-width: 1600px;
+        margin: 0 auto;
+        padding: 32px 16px 64px;
+      }
+      h1 {
+        font-size: 28px;
+        line-height: 36px;
+        margin: 0 0 4px;
+      }
+      h2 {
+        font-size: 18px;
+        margin: 40px 0 4px;
+      }
+      p {
+        color: var(--np-text-secondary);
+        margin: 0 0 12px;
+        max-width: 80ch;
+      }
+      nav a {
+        color: var(--np-accent-text);
+        margin-right: 12px;
+      }
+      .pair {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+        align-items: start;
+      }
+      .pair.phone {
+        grid-template-columns: repeat(2, minmax(0, 390px));
+      }
+      figure {
+        margin: 0;
+        background: var(--np-bg-1);
+        border-radius: var(--np-radius-lg);
+        overflow: hidden;
+      }
+      figcaption {
+        padding: 8px 12px;
+        font-size: 12px;
+        color: var(--np-text-muted);
+      }
+      img {
+        display: block;
+        width: 100%;
+        height: auto;
+      }
+      .none {
+        display: grid;
+        place-items: center;
+        min-height: 200px;
+        color: var(--np-text-muted);
+        font-size: 13px;
+        padding: 16px;
+        text-align: center;
+      }
+      @media (max-width: 800px) {
+        .pair,
+        .pair.phone {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Before and after</h1>
+      <p>
+        Left: the app before the redesign. Right: now. 1440 × 900 and 390 × 844. "After" screenshots were taken on the isolated test server with a copy of your
+        data folder, so they show your own generations; the 1000-credit balance comes from the test mock, not your account.
+      </p>
+      <nav id="pages"></nav>
+      <div id="rows"></div>
+    </main>
+    <script>
+      // [title, before file or null, after file, note]
+      const PAGES = [
+        ["Explore", null, "explore", "New home page: start cards and your latest work."],
+        ["Image", "studio-image", "image", "Family picker, References box, setting tiles, prompt chips."],
+        ["Video", "studio-video", "video", "Same panel; routing by attachment, Extend video tab."],
+        ["Audio", null, "audio", "Same panel for music and speech."],
+        ["Tools", null, "tools", "A grid of tool cards."],
+        ["Tool panel", null, "tool-upscale-image", "Each tool opens its own short panel, with an engine choice."],
+        ["Library", "history", "library", "Filters, search, sort, multi-select ZIP download (was History)."],
+      ];
+      const nav = document.getElementById("pages");
+      const rows = document.getElementById("rows");
+      const fig = (src, cap) =>
+        src
+          ? `<figure><img src="${src}" alt="${cap}" loading="lazy" /><figcaption>${cap}</figcaption></figure>`
+          : `<figure><div class="none">No "before" screenshot: this page didn't exist.</div><figcaption>${cap}</figcaption></figure>`;
+      for (const [title, before, after, note] of PAGES) {
+        const id = after;
+        nav.insertAdjacentHTML("beforeend", `<a href="#${id}">${title}</a>`);
+        rows.insertAdjacentHTML(
+          "beforeend",
+          `<section id="${id}"><h2>${title}</h2><p>${note}</p>
+           <div class="pair">${fig(before && `before/${before}-1440.png`, "Before · 1440")}${fig(`after/${after}-1440.png`, "After · 1440")}</div>
+           <div class="pair phone" style="margin-top:16px">${fig(before && `before/${before}-390.png`, "Before · 390")}${fig(`after/${after}-390.png`, "After · 390")}</div></section>`,
+        );
+      }
+    </script>
+  </body>
+</html>

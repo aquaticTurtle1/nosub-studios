@@ -1,0 +1,127 @@
+/* Neon Pink — design tokens for the Kie.ai Studio app.
+   Source of truth: the "Neon Pink" design system (tokens.json). Do not invent new colors;
+   add a token here first if something is missing.
+   Dark theme only. Import once from app/globals.css:  @import "./neon-pink-tokens.css";  */
+
+/* Fonts: Inter and Space Grotesk are self-hosted via next/font in app/layout.tsx (same families
+   as the original Google Fonts @import, which was removed so the app works offline). */
+
+:root {
+  color-scheme: dark;
+
+  /* Surfaces */
+  --np-bg-0: #0d0a10;          /* page canvas, behind media */
+  --np-bg-1: #15111a;          /* sidebar, top bar, control panel */
+  --np-bg-2: #1e1824;          /* inputs, prompt box, chips, card frames */
+  --np-bg-3: #29212f;          /* hover, popovers, menus, dialogs */
+  --np-border-subtle: #2a2230;
+  --np-border-strong: #3b3143;
+  --np-scrim: #0d0a10cc;
+
+  /* Text */
+  --np-text-primary: #f7f0fa;
+  --np-text-secondary: #bdb0c4;
+  --np-text-muted: #9a8ca3;
+
+  /* Accent: one filled accent element per view */
+  --np-accent: #ff2e93;
+  --np-accent-hover: #ff52a8;
+  --np-accent-pressed: #e0157a;
+  --np-accent-soft: #ff2e9326;
+  --np-accent-text: #ff5caa;
+  --np-on-accent: #2a0016;      /* text on accent; never white */
+  --np-focus-ring: #ff52a8;
+
+  /* States (danger is orange so it never reads as the pink accent) */
+  --np-success: #3ddc97;
+  --np-success-soft: #3ddc971f;
+  --np-warning: #ffc23d;
+  --np-warning-soft: #ffc23d1f;
+  --np-danger: #ff7a45;
+  --np-danger-soft: #ff7a451f;
+
+  /* Type */
+  --np-font-sans: Inter, system-ui, sans-serif;
+  --np-font-display: "Space Grotesk", Inter, system-ui, sans-serif;
+
+  /* Spacing (4px base) */
+  --np-space-1: 4px;
+  --np-space-2: 8px;
+  --np-space-3: 12px;
+  --np-space-4: 16px;
+  --np-space-6: 24px;
+  --np-space-8: 32px;
+  --np-space-12: 48px;
+
+  /* Radius */
+  --np-radius-sm: 6px;   /* badges, small thumbs */
+  --np-radius-md: 10px;  /* buttons, chips, inputs */
+  --np-radius-lg: 14px;  /* media and model cards, popovers */
+  --np-radius-xl: 20px;  /* control panel, dialogs, hero cards */
+  --np-radius-full: 999px;
+
+  /* Shadow */
+  --np-shadow-popover: 0 12px 32px #000000a0, 0 2px 8px #00000080;
+  --np-shadow-accent: 0 6px 20px #ff2e9340; /* Generate button only */
+
+  /* Motion */
+  --np-dur-fast: 150ms;
+  --np-dur-base: 220ms;
+  --np-ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
+
+  /* shadcn/ui variable mapping (keeps existing shadcn components on-theme).
+     Note: shadcn's --accent means "hover surface", not our pink. */
+  --background: var(--np-bg-0);
+  --foreground: var(--np-text-primary);
+  --card: var(--np-bg-2);
+  --card-foreground: var(--np-text-primary);
+  --popover: var(--np-bg-3);
+  --popover-foreground: var(--np-text-primary);
+  --primary: var(--np-accent);
+  --primary-foreground: var(--np-on-accent);
+  --secondary: var(--np-bg-2);
+  --secondary-foreground: var(--np-text-primary);
+  --muted: var(--np-bg-2);
+  --muted-foreground: var(--np-text-muted);
+  --accent: var(--np-bg-3);
+  --accent-foreground: var(--np-text-primary);
+  --destructive: var(--np-danger);
+  --destructive-foreground: var(--np-bg-0);
+  --border: var(--np-border-subtle);
+  --input: var(--np-border-strong);
+  --ring: var(--np-focus-ring);
+  --radius: var(--np-radius-md);
+  --sidebar: var(--np-bg-1);
+  --sidebar-foreground: var(--np-text-secondary);
+  --sidebar-primary: var(--np-accent);
+  --sidebar-primary-foreground: var(--np-on-accent);
+  --sidebar-accent: var(--np-accent-soft);
+  --sidebar-accent-foreground: var(--np-accent-text);
+  --sidebar-border: var(--np-border-subtle);
+  --sidebar-ring: var(--np-focus-ring);
+}
+
+html, body {
+  background: var(--np-bg-0);
+  color: var(--np-text-primary);
+  font-family: var(--np-font-sans);
+  font-size: 14px;
+  line-height: 20px;
+}
+
+:focus-visible {
+  outline: 2px solid var(--np-focus-ring);
+  outline-offset: 2px;
+}
+
+::selection {
+  background: var(--np-accent-soft);
+  color: var(--np-text-primary);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}

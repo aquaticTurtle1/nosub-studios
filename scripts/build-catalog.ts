@@ -6,7 +6,9 @@
 import fs from "node:fs";
 import path from "node:path";
 import * as yaml from "js-yaml";
+import { syntaxFor } from "../lib/catalog/prompt-syntax";
 import type { Catalog, CatalogModel, Category, Family, JsonSchema, PriceRow } from "../lib/catalog/types";
+import { layoutFields } from "../lib/ui/fields";
 
 const DOCS_DIR = path.join(process.cwd(), "docs-cache");
 const OUT_FILE = path.join(process.cwd(), "lib", "catalog", "generated", "catalog.json");
@@ -167,15 +169,25 @@ function variantsOf(schema: JsonSchema): { title: string; schema: JsonSchema }[]
   const alts = schema.oneOf ?? schema.anyOf;
   const base: JsonSchema = { ...schema, oneOf: undefined, anyOf: undefined };
   if (!alts?.length) return [{ title: "Default", schema: base }];
-  return alts.map((alt, i) => ({
+  const all = alts.map((alt, i) => ({
     title: (alt as { title?: string }).title ?? `Variant ${i + 1}`,
     schema: {
       type: "object",
       description: base.description,
       properties: { ...base.properties, ...alt.properties },
       required: [...new Set([...(base.required ?? []), ...(alt.required ?? [])])],
-    },
+    } as JsonSchema,
   }));
+  // Some pages carry a meaningless `anyOf: [{type: string}, {type: string}]` (MiniMax H3):
+  // variants that end up identical are one input shape, not a choice for the user.
+  const unique = all.filter((v, i) => all.findIndex((w) => JSON.stringify(w.schema) === JSON.stringify(v.schema)) === i);
+  if (unique.length === 1) return [{ title: "Default", schema: unique[0].schema }];
+  // Untitled but different: name each by the fields only it has ("With Video urls").
+  return unique.map((v) => {
+    if (!/^Variant \d+$/.test(v.title)) return v;
+    const own = Object.keys(v.schema.properties ?? {}).filter((k) => unique.some((w) => w !== v && !w.schema.properties?.[k]));
+    return own.length ? { ...v, title: `With ${own.map((k) => k.replace(/_/g, " ")).join(", ")}` } : v;
+  });
 }
 
 function categoryFromTag(tag: string): Category {
@@ -422,6 +434,11 @@ function main() {
           family === "omni-asset" ? [] : matchPrice([modelId, slug.split("__").slice(1).join("-")], operation),
         summary,
         free: /This endpoint is free/i.test(String(op.description ?? "")),
+        promptReferenceSyntax: syntaxFor(
+          slug.replace(/^market__/, "").replace(/__/g, "/"),
+          docUrl,
+          variants.some((v) => layoutFields(v.schema).refFields.length > 0),
+        ),
       });
     }
   }

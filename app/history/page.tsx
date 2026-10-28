@@ -1,7 +1,6 @@
-import { HistoryView } from "@/components/studio/history-view";
+import { redirect } from "next/navigation";
 
-export const metadata = { title: "History · Kie.ai Studio" };
-
+// The old History page is now the Library.
 export default function Page() {
-  return <HistoryView />;
+  redirect("/library");
 }

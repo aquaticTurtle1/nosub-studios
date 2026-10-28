@@ -1,5 +1,5 @@
 {
- "generatedAt": "2026-10-28T00:03:29.876Z",
+ "generatedAt": "2026-10-28T10:53:17.105Z",
  "pricingFetchedAt": "2026-10-28T00:00:00.000Z",
  "models": [
   {
@@ -85,7 +85,11 @@
     }
    ],
    "summary": "",
-   "free": false
+   "free": false,
+   "promptReferenceSyntax": {
+    "kind": "none",
+    "unverified": true
+   }
   },
   {
    "key": "flux-kontext-api/generate-or-edit-image",
@@ -224,7 +228,11 @@
     }
    ],
    "summary": "Usage Modes 1. Text-to-Image Generation - Provide prompt and aspect_ratio - Model will generate a new image based on the text description",
-   "free": false
+   "free": false,
+   "promptReferenceSyntax": {
+    "kind": "none",
+    "unverified": true
+   }
   },
   {
    "key": "bytedance/seedance-2-5-draft",
@@ -527,7 +535,11 @@
     }
    ],
    "summary": "After submitting a task, use the unified query endpoint to check progress and retrieve results",
-   "free": false
+   "free": false,
+   "promptReferenceSyntax": {
+    "kind": "none",
+    "unverified": true
+   }
   },
   {
    "key": "bytedance/seedance-2-fast",
@@ -701,7 +713,11 @@
     }
    ],
    "summary": "After submitting a task, use the unified query endpoint to check progress and retrieve results",
-   "free": false
+   "free": false,
+   "promptReferenceSyntax": {
+    "kind": "none",
+    "unverified": true
+   }
   },
   {
    "key": "bytedance/seedance-2-mini",
@@ -869,7 +885,11 @@
     }
    ],
    "summary": "After submitting a task, use the unified query endpoint to check progress and retrieve results",
-   "free": false
+   "free": false,
+   "promptReferenceSyntax": {
+    "kind": "none",
+    "unverified": true
+   }
   },
   {
    "key": "bytedance/seedance-2",
@@ -1069,7 +1089,11 @@
     }
    ],
    "summary": "After submitting a task, use the unified query endpoint to check progress and retrieve results",
-   "free": false
+   "free": false,
+   "promptReferenceSyntax": {
+    "kind": "none",
+    "unverified": true
+   }
   },
   {
    "key": "bytedance/v1-lite-image-to-video",
@@ -1202,7 +1226,11 @@
     }
    ],
    "summary": "Content generation using bytedance/v1-lite-image-to-video",
-   "free": false
+   "free": false,
+   "promptReferenceSyntax": {
+    "kind": "none",
+    "unverified": true
+   }
   },
   {
    "key": "bytedance/v1-lite-text-to-video",
@@ -1429,7 +1457,11 @@
     }
    ],
    "summary": "After submitting a task, use the unified query endpoint to check progress and retrieve results",
-   "free": false
+   "free": false,
+   "promptReferenceSyntax": {
+    "kind": "none",
+    "unverified": true
+   }
   },
   {
    "key": "bytedance/v1-pro-image-to-video",
@@ -1553,7 +1585,11 @@
     }
    ],
    "summary": "Content generation using bytedance/v1-pro-image-to-video",
-   "free": false
+   "free": false,
+   "promptReferenceSyntax": {
+    "kind": "none",
+    "unverified": true
+   }
   },
   {
    "key": "bytedance/v1-pro-text-to-video",
@@ -1724,7 +1760,11 @@
    "issues": [],
    "pricing": [],
    "summary": "Content generation using elevenlabs/audio-isolation",
-   "free": false
+   "free": false,
+   "promptReferenceSyntax": {
+    "kind": "none",
+    "unverified": true
+   }
   },
   {
    "key": "elevenlabs/text-to-dialogue-v3",
@@ -2467,7 +2507,17 @@
     }
    ],
    "summary": "Image generation by flux-2/flex-image-to-image",
-   "free": false
+   "free": false,
+   "promptReferenceSyntax": {
+    "kind": "token",
+    "format": "image {n}",
+    "indexBase": 1,
+    "fields": [
+     "input_urls"
+    ],
+    "note": "Only shown in the docs' example prompt",
+    "source": "https://docs.kie.ai/market/flux2/flex-image-to-image"
+   }
   },
   {
    "key": "flux2/flex-text-to-image",
@@ -2660,7 +2710,11 @@
     }
    ],
    "summary": "Image generation by flux-2/pro-image-to-image",
-   "free": false
+   "free": false,
+   "promptReferenceSyntax": {
+    "kind": "none",
+    "unverified": true
+   }
   },
   {
    "key": "flux2/pro-text-to-image",
@@ -2901,7 +2955,11 @@
     }
    ],
    "summary": "Query Task Status After submitting the task, you can check the progress of the task and obtain the generated results through the unified query endpoint <Card title=\"Get Task Details\" icon=\"lucide-search\" href=\"/market/common/get-task-detail\" Learn how to check the task status and",
-   "free": false
+   "free": false,
+   "promptReferenceSyntax": {
+    "kind": "none",
+    "unverified": true
+   }
   },
   {
    "key": "flux3/klein-text-to-image",
@@ -3195,7 +3253,11 @@
    "issues": [],
    "pricing": [],
    "summary": "- image_urls supports 1–2 images (index 0 portrait, index 1 optional full-body), each up to 20MB. - audio_ids must come from the gemini-omni-audio endpoint",
-   "free": true
+   "free": true,
+   "promptReferenceSyntax": {
+    "kind": "none",
+    "unverified": true
+   }
   },
   {
    "key": "gemini-omni-video",
@@ -3448,7 +3510,11 @@
     }
    ],
    "summary": "Use this endpoint to create a new multimodal video generation task.",
-   "free": false
+   "free": false,
+   "promptReferenceSyntax": {
+    "kind": "none",
+    "unverified": true
+   }
   },
   {
    "key": "google/gemini-2-5-pro-tts",
@@ -4529,7 +4595,11 @@
     }
    ],
    "summary": "Use this endpoint to create a new multimodal video generation task.",
-   "free": false
+   "free": false,
+   "promptReferenceSyntax": {
+    "kind": "none",
+    "unverified": true
+   }
   },
   {
    "key": "google/imagen4-fast",
@@ -4865,7 +4935,11 @@
     }
    ],
    "summary": "Use this endpoint to create a new image generation task. Provide a text prompt, and optionally include image URLs as visual references.",
-   "free": false
+   "free": false,
+   "promptReferenceSyntax": {
+    "kind": "none",
+    "unverified": true
+   }
   },
   {
    "key": "google/nano-banana-edit",
@@ -4985,7 +5059,11 @@
     }
    ],
    "summary": "Image editing using Google's Nano Banana Edit model",
-   "free": false
+   "free": false,
+   "promptReferenceSyntax": {
+    "kind": "none",
+    "unverified": true
+   }
   },
   {
    "key": "google/nano-banana",
@@ -5215,7 +5293,11 @@
     }
    ],
    "summary": "Image generation by Nano Banana 2.1",
-   "free": false
+   "free": false,
+   "promptReferenceSyntax": {
+    "kind": "none",
+    "unverified": true
+   }
   },
   {
    "key": "google/nanobanana2",
@@ -5340,7 +5422,11 @@
     }
    ],
    "summary": "Image generation by Nano Banana 2",
-   "free": false
+   "free": false,
+   "promptReferenceSyntax": {
+    "kind": "none",
+    "unverified": true
+   }
   },
   {
    "key": "google/pro-image-to-image",
@@ -5454,7 +5540,11 @@
     }
    ],
    "summary": "Image generation using Google's Pro Image to Image model",
-   "free": false
+   "free": false,
+   "promptReferenceSyntax": {
+    "kind": "none",
+    "unverified": true
+   }
   },
   {
    "key": "gpt-image/1-5-image-to-image",
@@ -5550,7 +5640,11 @@
     }
    ],
    "summary": "Generate images from input images using the GPT Image 1.5 Image To Image model. This model allows you to edit or modify existing images with text prompts. The process consists of two steps create a generation task and query task status and results.",
-   "free": false
+   "free": false,
+   "promptReferenceSyntax": {
+    "kind": "none",
+    "unverified": true
+   }
   },
   {
    "key": "gpt-image/1-5-text-to-image",
@@ -5740,7 +5834,11 @@
     }
    ],
    "summary": "Use this endpoint to create a new image-to-image generation task.",
-   "free": false
+   "free": false,
+   "promptReferenceSyntax": {
+    "kind": "none",
+    "unverified": true
+   }
   },
   {
    "key": "gpt/gpt-image-2-5-flare-text-to-image",
@@ -5950,7 +6048,11 @@
     }
    ],
    "summary": "Use this endpoint to create a new image-to-image generation task.",
-   "free": false
+   "free": false,
+   "promptReferenceSyntax": {
+    "kind": "none",
+    "unverified": true
+   }
   },
   {
    "key": "gpt/gpt-image-2-5-sunburst-text-to-image",
@@ -6163,7 +6265,11 @@
     }
    ],
    "summary": "Use this endpoint to create a new image-to-image generation task.",
-   "free": false
+   "free": false,
+   "promptReferenceSyntax": {
+    "kind": "none",
+    "unverified": true
+   }
   },
   {
    "key": "gpt/gpt-image-2-text-to-image",
@@ -6423,7 +6529,11 @@
     }
    ],
    "summary": "After submitting a task, use the unified query endpoint to check progress and retrieve results",
-   "free": false
+   "free": false,
+   "promptReferenceSyntax": {
+    "kind": "none",
+    "unverified": true
+   }
   },
   {
    "key": "grok-imagine-image-2-0/segment-map",
@@ -6492,7 +6602,11 @@
     }
    ],
    "summary": "",
-   "free": true
+   "free": true,
+   "promptReferenceSyntax": {
+    "kind": "none",
+    "unverified": true
+   }
   },
   {
    "key": "grok-imagine-image-2-0/text-to-image",
@@ -6696,7 +6810,16 @@
     }
    ],
    "summary": "Output is an MP4 video with an audio track generated together with the video (dialogue written in the prompt is spoken). Audio cannot be turned off.",
-   "free": false
+   "free": false,
+   "promptReferenceSyntax": {
+    "kind": "token",
+    "format": "@image{n}",
+    "indexBase": 1,
+    "fields": [
+     "image_urls"
+    ],
+    "source": "https://docs.kie.ai/market/grok-imagine/1-5-preview"
+   }
   },
   {
    "key": "grok-imagine/extend",
@@ -6857,7 +6980,16 @@
     }
    ],
    "summary": "Content generation using grok-imagine/image-to-image",
-   "free": false
+   "free": false,
+   "promptReferenceSyntax": {
+    "kind": "token",
+    "format": "@image{n}",
+    "indexBase": 1,
+    "fields": [
+     "image_urls"
+    ],
+    "source": "https://docs.kie.ai/market/grok-imagine/image-to-image"
+   }
   },
   {
    "key": "grok-imagine/image-to-video",
@@ -6994,7 +7126,16 @@
     }
    ],
    "summary": "Output is an MP4 video with an audio track generated together with the video (dialogue written in the prompt is spoken). Audio cannot be turned off.",
-   "free": false
+   "free": false,
+   "promptReferenceSyntax": {
+    "kind": "token",
+    "format": "@image{n}",
+    "indexBase": 1,
+    "fields": [
+     "image_urls"
+    ],
+    "source": "https://docs.kie.ai/market/grok-imagine/image-to-video"
+   }
   },
   {
    "key": "grok-imagine/text-to-image",
@@ -7323,7 +7464,11 @@
     }
    ],
    "summary": "Content generation using hailuo/02-image-to-video-pro",
-   "free": false
+   "free": false,
+   "promptReferenceSyntax": {
+    "kind": "none",
+    "unverified": true
+   }
   },
   {
    "key": "hailuo/02-image-to-video-standard",
@@ -7444,7 +7589,11 @@
     }
    ],
    "summary": "Content generation using hailuo/02-image-to-video-standard",
-   "free": false
+   "free": false,
+   "promptReferenceSyntax": {
+    "kind": "none",
+    "unverified": true
+   }
   },
   {
    "key": "hailuo/02-text-to-video-pro",
@@ -7677,7 +7826,11 @@
     }
    ],
    "summary": "Content generation using hailuo/2-3-image-to-video-pro",
-   "free": false
+   "free": false,
+   "promptReferenceSyntax": {
+    "kind": "none",
+    "unverified": true
+   }
   },
   {
    "key": "hailuo/2-3-image-to-video-standard",
@@ -7776,7 +7929,11 @@
     }
    ],
    "summary": "Content generation using hailuo/2-3-image-to-video-standard",
-   "free": false
+   "free": false,
+   "promptReferenceSyntax": {
+    "kind": "none",
+    "unverified": true
+   }
   },
   {
    "key": "happyhorse-1-1/image-to-video",
@@ -7872,7 +8029,11 @@
     }
    ],
    "summary": "Query Task Status After submitting the task, you can check the progress of the task and obtain the generated results through the unified query endpoint <Card title=\"Get Task Details\" icon=\"lucide-search\" href=\"/market/common/get-task-detail\" Learn how to check the task status and",
-   "free": false
+   "free": false,
+   "promptReferenceSyntax": {
+    "kind": "none",
+    "unverified": true
+   }
   },
   {
    "key": "happyhorse-1-1/reference-to-video",
@@ -7987,7 +8148,16 @@
     }
    ],
    "summary": "Query Task Status After submitting the task, you can check the progress of the task and obtain the generated results through the unified query endpoint <Card title=\"Get Task Details\" icon=\"lucide-search\" href=\"/market/common/get-task-detail\" Learn how to check the task status and",
-   "free": false
+   "free": false,
+   "promptReferenceSyntax": {
+    "kind": "token",
+    "format": "[Image {n}]",
+    "indexBase": 1,
+    "fields": [
+     "reference_image"
+    ],
+    "source": "https://docs.kie.ai/market/happyhorse-1-1/reference-to-video"
+   }
   },
   {
    "key": "happyhorse-1-1/text-to-video",
@@ -8177,7 +8347,11 @@
     }
    ],
    "summary": "After submitting a task, use the unified query endpoint to check progress and retrieve results",
-   "free": false
+   "free": false,
+   "promptReferenceSyntax": {
+    "kind": "none",
+    "unverified": true
+   }
   },
   {
    "key": "happyhorse/reference-to-video",
@@ -8288,7 +8462,11 @@
     }
    ],
    "summary": "After submitting a task, use the unified query endpoint to check progress and retrieve results",
-   "free": false
+   "free": false,
+   "promptReferenceSyntax": {
+    "kind": "none",
+    "unverified": true
+   }
   },
   {
    "key": "happyhorse/text-to-video",
@@ -8489,7 +8667,11 @@
     }
    ],
    "summary": "The output has the same duration as the input video and is rendered at the selected resolution.",
-   "free": false
+   "free": false,
+   "promptReferenceSyntax": {
+    "kind": "none",
+    "unverified": true
+   }
   },
   {
    "key": "ideogram/character-edit",
@@ -8638,7 +8820,11 @@
     }
    ],
    "summary": "Image generation by ideogram/character-edit",
-   "free": false
+   "free": false,
+   "promptReferenceSyntax": {
+    "kind": "none",
+    "unverified": true
+   }
   },
   {
    "key": "ideogram/character-remix",
@@ -8834,7 +9020,11 @@
     }
    ],
    "summary": "Image generation by ideogram/character-remix",
-   "free": false
+   "free": false,
+   "promptReferenceSyntax": {
+    "kind": "none",
+    "unverified": true
+   }
   },
   {
    "key": "ideogram/character",
@@ -8987,7 +9177,11 @@
     }
    ],
    "summary": "Image generation by ideogram/character",
-   "free": false
+   "free": false,
+   "promptReferenceSyntax": {
+    "kind": "none",
+    "unverified": true
+   }
   },
   {
    "key": "ideogram/v3-edit",
@@ -9095,7 +9289,11 @@
     }
    ],
    "summary": "Image generation by ideogram/v3-edit",
-   "free": false
+   "free": false,
+   "promptReferenceSyntax": {
+    "kind": "none",
+    "unverified": true
+   }
   },
   {
    "key": "ideogram/v3-remix",
@@ -9245,7 +9443,11 @@
     }
    ],
    "summary": "Image generation by ideogram/v3-remix",
-   "free": false
+   "free": false,
+   "promptReferenceSyntax": {
+    "kind": "none",
+    "unverified": true
+   }
   },
   {
    "key": "ideogram/v3-text-to-image",
@@ -9451,7 +9653,11 @@
     }
    ],
    "summary": "Content generation using infinitalk/from-audio",
-   "free": false
+   "free": false,
+   "promptReferenceSyntax": {
+    "kind": "none",
+    "unverified": true
+   }
   },
   {
    "key": "kling/ai-avatar-pro",
@@ -9520,7 +9726,11 @@
     }
    ],
    "summary": "Generates a talking video from one portrait image and one speech audio clip. AI Avatar Standard outputs 720p and AI Avatar Pro outputs 1080p; the video length follows the audio.",
-   "free": false
+   "free": false,
+   "promptReferenceSyntax": {
+    "kind": "none",
+    "unverified": true
+   }
   },
   {
    "key": "kling/ai-avatar-standard",
@@ -9589,7 +9799,11 @@
     }
    ],
    "summary": "Generates a talking video from one portrait image and one speech audio clip. AI Avatar Standard outputs 720p and AI Avatar Pro outputs 1080p; the video length follows the audio.",
-   "free": false
+   "free": false,
+   "promptReferenceSyntax": {
+    "kind": "none",
+    "unverified": true
+   }
   },
   {
    "key": "kling/image-to-video",
@@ -9693,7 +9907,11 @@
     }
    ],
    "summary": "After submitting a task, you can check the task progress and retrieve generation results via the unified query endpoint",
-   "free": false
+   "free": false,
+   "promptReferenceSyntax": {
+    "kind": "none",
+    "unverified": true
+   }
   },
   {
    "key": "kling/kling-3-0",
@@ -9962,7 +10180,11 @@
     }
    ],
    "summary": "Generate high-quality videos with advanced multi-shot capabilities and element references using Kling 3.0 AI",
-   "free": false
+   "free": false,
+   "promptReferenceSyntax": {
+    "kind": "none",
+    "unverified": true
+   }
   },
   {
    "key": "kling/motion-control-v3",
@@ -10046,7 +10268,11 @@
     }
    ],
    "summary": "File Upload Requirements",
-   "free": false
+   "free": false,
+   "promptReferenceSyntax": {
+    "kind": "none",
+    "unverified": true
+   }
   },
   {
    "key": "kling/motion-control",
@@ -10158,7 +10384,11 @@
     }
    ],
    "summary": "The output may keep the audio track of the reference video.",
-   "free": false
+   "free": false,
+   "promptReferenceSyntax": {
+    "kind": "none",
+    "unverified": true
+   }
   },
   {
    "key": "kling/text-to-video",
@@ -10351,7 +10581,11 @@
     }
    ],
    "summary": "After submitting a task, use the unified query endpoint to check progress and retrieve results",
-   "free": false
+   "free": false,
+   "promptReferenceSyntax": {
+    "kind": "none",
+    "unverified": true
+   }
   },
   {
    "key": "kling/v2-1-master-text-to-video",
@@ -10551,7 +10785,11 @@
     }
    ],
    "summary": "After submitting a task, use the unified query endpoint to check progress and retrieve results",
-   "free": false
+   "free": false,
+   "promptReferenceSyntax": {
+    "kind": "none",
+    "unverified": true
+   }
   },
   {
    "key": "kling/v2-1-standard",
@@ -10646,7 +10884,11 @@
     }
    ],
    "summary": "After submitting a task, use the unified query endpoint to check progress and retrieve results",
-   "free": false
+   "free": false,
+   "promptReferenceSyntax": {
+    "kind": "none",
+    "unverified": true
+   }
   },
   {
    "key": "kling/v25-turbo-image-to-video-pro",
@@ -10750,7 +10992,11 @@
     }
    ],
    "summary": "Output videos include an audio track; there is no option to turn it off.",
-   "free": false
+   "free": false,
+   "promptReferenceSyntax": {
+    "kind": "none",
+    "unverified": true
+   }
   },
   {
    "key": "kling/v25-turbo-text-to-video-pro",
@@ -11376,7 +11622,11 @@
     }
    ],
    "summary": "After submitting a task, you can check the task progress and retrieve generation results via the unified query endpoint",
-   "free": false
+   "free": false,
+   "promptReferenceSyntax": {
+    "kind": "none",
+    "unverified": true
+   }
   },
   {
    "key": "kling/v3-omni-reference-to-video",
@@ -11966,7 +12216,11 @@
     }
    ],
    "summary": "After submitting a task, you can check the task progress and retrieve generation results via the unified query endpoint",
-   "free": false
+   "free": false,
+   "promptReferenceSyntax": {
+    "kind": "none",
+    "unverified": true
+   }
   },
   {
    "key": "kling/v3-omni-text-to-video",
@@ -12585,7 +12839,11 @@
     }
    ],
    "summary": "After submitting a task, you can check the task progress and retrieve generation results via the unified query endpoint",
-   "free": false
+   "free": false,
+   "promptReferenceSyntax": {
+    "kind": "none",
+    "unverified": true
+   }
   },
   {
    "key": "kling/v3-turbo-image-to-video",
@@ -12677,7 +12935,11 @@
     }
    ],
    "summary": "Output videos always include an audio track; there is no option to turn it off.",
-   "free": false
+   "free": false,
+   "promptReferenceSyntax": {
+    "kind": "none",
+    "unverified": true
+   }
   },
   {
    "key": "kling/v3-turbo-text-to-video",
@@ -12876,7 +13138,18 @@
     }
    ],
    "summary": "Generate a video from first, middle, and last keyframe images with Kling 4.0. Mention frames in the prompt using @first_frame , @keyframe_1 , and @last_frame .",
-   "free": false
+   "free": false,
+   "promptReferenceSyntax": {
+    "kind": "token",
+    "format": "@keyframe_{n}",
+    "indexBase": 1,
+    "fieldFormats": {
+     "first_frame_url": "@first_frame",
+     "keyframe_urls": "@keyframe_{n}",
+     "last_frame_url": "@last_frame"
+    },
+    "source": "https://docs.kie.ai/market/kling/v4-keyframe-to-video"
+   }
   },
   {
    "key": "kling/v4-reference-to-video",
@@ -13097,7 +13370,17 @@
     }
    ],
    "summary": "Generate videos with Kling 4.0 from reference images, reference videos, elements, and voices. Reference your materials in the prompt using @image_1 , @video_1 , or custom @name tags.",
-   "free": false
+   "free": false,
+   "promptReferenceSyntax": {
+    "kind": "token",
+    "format": "@{kind}_{n}",
+    "indexBase": 1,
+    "fields": [
+     "image_urls",
+     "video_urls"
+    ],
+    "source": "https://docs.kie.ai/market/kling/v4-reference-to-video"
+   }
   },
   {
    "key": "minimax-h3/image-to-video",
@@ -13111,83 +13394,7 @@
    "bodyMode": "nested",
    "variants": [
     {
-     "title": "Variant 1",
-     "schema": {
-      "type": "object",
-      "properties": {
-       "prompt": {
-        "type": "string",
-        "description": "Video generation prompt, length is between 1 and 7000 characters.",
-        "minLength": 1,
-        "maxLength": 7000,
-        "examples": [
-         "Let the character in the scene turn around naturally and smile, camera slowly pushing forward"
-        ]
-       },
-       "first_frame_url": {
-        "type": "string",
-        "description": "First frame image URL. Note: Either first_frame_url or last_frame_url must be provided. Publicly accessible HTTP(S) URL; supports JPG, JPEG, PNG, WEBP, HEIC, HEIF formats; single image size not exceeding 30 MB, image side length between 256 and 5760 pixels, aspect ratio between 0.4 and 2.5.",
-        "pattern": "^(https?|oss)://",
-        "format": "uri",
-        "examples": [
-         "https://example.com/first-frame.jpg"
-        ]
-       },
-       "last_frame_url": {
-        "type": "string",
-        "description": "Last frame image URL. Note: Either first_frame_url or last_frame_url must be provided. Image restrictions are the same as first_frame_url.",
-        "pattern": "^(https?|oss)://",
-        "format": "uri",
-        "examples": [
-         "https://example.com/last-frame.jpg"
-        ]
-       },
-       "duration": {
-        "type": "integer",
-        "description": "Generated video duration, supporting integer values from 4 to 15 seconds.",
-        "enum": [
-         4,
-         5,
-         6,
-         7,
-         8,
-         9,
-         10,
-         11,
-         12,
-         13,
-         14,
-         15
-        ],
-        "default": 6,
-        "minimum": 4,
-        "maximum": 15,
-        "examples": [
-         6
-        ]
-       },
-       "resolution": {
-        "type": "string",
-        "description": "Video resolution.",
-        "enum": [
-         "768P",
-         "2K"
-        ],
-        "default": "2K"
-       }
-      },
-      "required": [
-       "prompt",
-       "duration"
-      ]
-     },
-     "referenceFields": [
-      "first_frame_url",
-      "last_frame_url"
-     ]
-    },
-    {
-     "title": "Variant 2",
+     "title": "Default",
      "schema": {
       "type": "object",
       "properties": {
@@ -13284,7 +13491,11 @@
     }
    ],
    "summary": "Output videos include a stereo audio track generated with the video; dialogue, music and sound effects can be described in the prompt. Audio cannot be turned off.",
-   "free": false
+   "free": false,
+   "promptReferenceSyntax": {
+    "kind": "none",
+    "unverified": true
+   }
   },
   {
    "key": "minimax-h3/reference-to-video",
@@ -13298,126 +13509,7 @@
    "bodyMode": "nested",
    "variants": [
     {
-     "title": "Variant 1",
-     "schema": {
-      "type": "object",
-      "properties": {
-       "prompt": {
-        "type": "string",
-        "description": "Video generation prompt, length is between 1 and 7000 characters.",
-        "minLength": 1,
-        "maxLength": 7000,
-        "examples": [
-         "Generate a continuous cinematic video referencing the characters, actions, and scenes in the input material"
-        ]
-       },
-       "reference_image_urls": {
-        "type": "array",
-        "description": "Array of reference image URLs. Supports up to 9 images. Publicly accessible HTTP(S) URL; supported image formats include JPG, JPEG, PNG, WEBP, HEIC, and HEIF; a single image size cannot exceed 30 MB; the side length of the image must be between 256 and 5760 pixels, and the aspect ratio must be between 0.4 and 2.5. Provide at least one of reference_image_urls or reference_video_urls.",
-        "maxItems": 9,
-        "items": {
-         "type": "string",
-         "pattern": "^(https?|oss)://",
-         "format": "uri"
-        },
-        "examples": [
-         [
-          "https://example.com/reference-image-1.jpg",
-          "https://example.com/reference-image-2.jpg"
-         ]
-        ]
-       },
-       "reference_video_urls": {
-        "type": "array",
-        "description": "Array of reference video URLs. Supports up to 3 videos. Supports MP4, MOV; video encoding supports H.264, H.265; a single file size cannot exceed 50 MB; the duration of a single segment is 2 to 15 seconds, and the total duration of all reference videos cannot exceed 15 seconds; the video side length must be between 256 and 5760 pixels, the aspect ratio must be between 0.4 and 2.5, and the frame rate must be between 23.976 and 60. Provide at least one of reference_image_urls or reference_video_urls.",
-        "maxItems": 3,
-        "items": {
-         "type": "string",
-         "pattern": "^(https?|oss)://",
-         "format": "uri"
-        },
-        "examples": [
-         [
-          "https://example.com/reference-video.mp4"
-         ]
-        ]
-       },
-       "reference_audio_urls": {
-        "type": "array",
-        "description": "Array of reference audio URLs. Supports up to 3 audios. Supports WAV, MP3; a single file size cannot exceed 15 MB; the duration of a single segment is 2 to 15 seconds, and the total duration of all reference audios cannot exceed 15 seconds. reference_audio cannot be used alone, it must be accompanied by reference_image or reference_video.",
-        "maxItems": 3,
-        "items": {
-         "type": "string",
-         "pattern": "^(https?|oss)://",
-         "format": "uri"
-        },
-        "examples": [
-         [
-          "https://example.com/reference-audio.mp3"
-         ]
-        ]
-       },
-       "aspect_ratio": {
-        "type": "string",
-        "description": "Video aspect ratio. The default is adaptive, or a specific ratio can be specified.",
-        "enum": [
-         "adaptive",
-         "21:9",
-         "16:9",
-         "4:3",
-         "1:1",
-         "3:4",
-         "9:16"
-        ],
-        "default": "adaptive"
-       },
-       "duration": {
-        "type": "integer",
-        "description": "The duration of the generated video, supporting integer values from 4 to 15 seconds.",
-        "enum": [
-         4,
-         5,
-         6,
-         7,
-         8,
-         9,
-         10,
-         11,
-         12,
-         13,
-         14,
-         15
-        ],
-        "default": 6,
-        "minimum": 4,
-        "maximum": 15,
-        "examples": [
-         6
-        ]
-       },
-       "resolution": {
-        "type": "string",
-        "description": "Video resolution.",
-        "enum": [
-         "768P",
-         "2K"
-        ],
-        "default": "2K"
-       }
-      },
-      "required": [
-       "prompt",
-       "duration"
-      ]
-     },
-     "referenceFields": [
-      "reference_image_urls",
-      "reference_video_urls",
-      "reference_audio_urls"
-     ]
-    },
-    {
-     "title": "Variant 2",
+     "title": "Default",
      "schema": {
       "type": "object",
       "properties": {
@@ -13558,7 +13650,11 @@
     }
    ],
    "summary": "Output videos include a stereo audio track generated with the video; dialogue, music and sound effects can be described in the prompt. Audio cannot be turned off.",
-   "free": false
+   "free": false,
+   "promptReferenceSyntax": {
+    "kind": "none",
+    "unverified": true
+   }
   },
   {
    "key": "minimax-h3/text-to-video",
@@ -13749,7 +13845,11 @@
     }
    ],
    "summary": "Use this endpoint to create a new audio-driven portrait animation task. Upload a portrait image and an audio file, and the model will generate a video of the subject speaking or moving in sync with the audio.",
-   "free": false
+   "free": false,
+   "promptReferenceSyntax": {
+    "kind": "none",
+    "unverified": true
+   }
   },
   {
    "key": "omnihuman-1-5/human-identification",
@@ -13797,7 +13897,11 @@
     }
    ],
    "summary": "Calling this interface creates a new task for recognizing human portraits, human-like figures, or anthropomorphic subjects. Upload a portrait image, and the model will detect and identify the human subjects in the image.",
-   "free": true
+   "free": true,
+   "promptReferenceSyntax": {
+    "kind": "none",
+    "unverified": true
+   }
   },
   {
    "key": "omnihuman-1-5/subject-detection",
@@ -13845,7 +13949,11 @@
     }
    ],
    "summary": "Use this endpoint to create a new subject detection task. Upload a portrait image and the model will detect subjects in the image, supporting up to 5 subjects.",
-   "free": true
+   "free": true,
+   "promptReferenceSyntax": {
+    "kind": "none",
+    "unverified": true
+   }
   },
   {
    "key": "omnihuman-2-0",
@@ -13914,7 +14022,11 @@
     }
    ],
    "summary": "Use this endpoint to create an OmniHuman 2.0 video generation task. Provide an image, an audio file, and an optional text prompt. The model generates a video whose appearance matches the input image and whose motion is driven by the audio.",
-   "free": false
+   "free": false,
+   "promptReferenceSyntax": {
+    "kind": "none",
+    "unverified": true
+   }
   },
   {
    "key": "pixverse/extend",
@@ -14123,7 +14235,11 @@
     }
    ],
    "summary": "Query Task Status After submitting a task, you can check its progress and retrieve the result through the unified query endpoint <Card title=\"Get Task Details\" icon=\"magnifying-glass\" href=\"/market/common/get-task-detail\" Learn how to check task status and retrieve the generated ",
-   "free": false
+   "free": false,
+   "promptReferenceSyntax": {
+    "kind": "none",
+    "unverified": true
+   }
   },
   {
    "key": "pixverse/image-to-video",
@@ -14327,7 +14443,11 @@
     }
    ],
    "summary": "Query Task Status After submitting a task, you can check its progress and retrieve the result through the unified query endpoint <Card title=\"Get Task Details\" icon=\"magnifying-glass\" href=\"/market/common/get-task-detail\" Learn how to check task status and retrieve the generated ",
-   "free": false
+   "free": false,
+   "promptReferenceSyntax": {
+    "kind": "none",
+    "unverified": true
+   }
   },
   {
    "key": "pixverse/reference-to-video",
@@ -14534,7 +14654,17 @@
     }
    ],
    "summary": "Query Task Status After submitting a task, you can check its progress and retrieve the result through the unified query endpoint <Card title=\"Get Task Details\" icon=\"magnifying-glass\" href=\"/market/common/get-task-detail\" Learn how to check task status and retrieve the generated ",
-   "free": false
+   "free": false,
+   "promptReferenceSyntax": {
+    "kind": "token",
+    "format": "@{name}",
+    "indexBase": 1,
+    "fields": [
+     "image_references"
+    ],
+    "nameField": "ref_name",
+    "source": "https://docs.kie.ai/market/pixverse/reference-to-video"
+   }
   },
   {
    "key": "pixverse/text-to-video",
@@ -14846,7 +14976,11 @@
     }
    ],
    "summary": "Query Task Status After submitting a task, you can check its progress and retrieve the result through the unified query endpoint <Card title=\"Get Task Details\" icon=\"magnifying-glass\" href=\"/market/common/get-task-detail\" Learn how to check task status and retrieve the generated ",
-   "free": false
+   "free": false,
+   "promptReferenceSyntax": {
+    "kind": "none",
+    "unverified": true
+   }
   },
   {
    "key": "pixverse/v6-max-image-to-video",
@@ -14997,7 +15131,11 @@
     }
    ],
    "summary": "PixVerse V6 Max image-to-video. Animate a single reference image as the first frame into cinematic video up to 15 seconds at up to 1080p, with optional native audio synchronized to the picture. The output aspect ratio follows the input image; do not send aspect_ratio .",
-   "free": false
+   "free": false,
+   "promptReferenceSyntax": {
+    "kind": "none",
+    "unverified": true
+   }
   },
   {
    "key": "pixverse/v6-max-text-to-video",
@@ -15308,7 +15446,11 @@
     }
    ],
    "summary": "After submitting a task, use the unified query endpoint to check progress and retrieve results",
-   "free": false
+   "free": false,
+   "promptReferenceSyntax": {
+    "kind": "none",
+    "unverified": true
+   }
   },
   {
    "key": "qwen2-1/text-to-image",
@@ -15540,7 +15682,11 @@
     }
    ],
    "summary": "Image generation by qwen2/image-edit",
-   "free": false
+   "free": false,
+   "promptReferenceSyntax": {
+    "kind": "none",
+    "unverified": true
+   }
   },
   {
    "key": "qwen2/text-to-image",
@@ -15794,7 +15940,11 @@
     }
    ],
    "summary": "Use this endpoint to create a new image-to-image generation task. Upload an input image and provide a prompt describing the desired changes.",
-   "free": false
+   "free": false,
+   "promptReferenceSyntax": {
+    "kind": "none",
+    "unverified": true
+   }
   },
   {
    "key": "qwen3-pro/text-to-image",
@@ -16095,7 +16245,11 @@
     }
    ],
    "summary": "Use this endpoint to create a new image-to-image generation task. Upload an input image and provide a prompt describing the desired changes.",
-   "free": false
+   "free": false,
+   "promptReferenceSyntax": {
+    "kind": "none",
+    "unverified": true
+   }
   },
   {
    "key": "qwen3/text-to-image",
@@ -16376,7 +16530,11 @@
     }
    ],
    "summary": "Image generation by qwen/image-edit",
-   "free": false
+   "free": false,
+   "promptReferenceSyntax": {
+    "kind": "none",
+    "unverified": true
+   }
   },
   {
    "key": "qwen/image-to-image",
@@ -16513,7 +16671,11 @@
     }
    ],
    "summary": "Image generation by Qwen's advanced AI model",
-   "free": false
+   "free": false,
+   "promptReferenceSyntax": {
+    "kind": "none",
+    "unverified": true
+   }
   },
   {
    "key": "qwen/text-to-image",
@@ -16693,7 +16855,11 @@
     }
    ],
    "summary": "Enhance image resolution and quality using advanced AI upscaling powered by Recraft",
-   "free": false
+   "free": false,
+   "promptReferenceSyntax": {
+    "kind": "none",
+    "unverified": true
+   }
   },
   {
    "key": "recraft/remove-background",
@@ -16743,7 +16909,11 @@
     }
    ],
    "summary": "remove background by recraft/remove-background",
-   "free": false
+   "free": false,
+   "promptReferenceSyntax": {
+    "kind": "none",
+    "unverified": true
+   }
   },
   {
    "key": "seedream-5-lite-image-to-image",
@@ -16856,7 +17026,11 @@
     }
    ],
    "summary": "Image editing with Seedream 5.0 Lite",
-   "free": false
+   "free": false,
+   "promptReferenceSyntax": {
+    "kind": "none",
+    "unverified": true
+   }
   },
   {
    "key": "seedream/4-5-edit",
@@ -16956,7 +17130,11 @@
     }
    ],
    "summary": "Image editing by Seedream4.5",
-   "free": false
+   "free": false,
+   "promptReferenceSyntax": {
+    "kind": "none",
+    "unverified": true
+   }
   },
   {
    "key": "seedream/4-5-text-to-image",
@@ -17162,7 +17340,11 @@
     }
    ],
    "summary": "Image editing with Seedream 5.0 Flash",
-   "free": false
+   "free": false,
+   "promptReferenceSyntax": {
+    "kind": "none",
+    "unverified": true
+   }
   },
   {
    "key": "seedream/5-flash-layer-decomposition",
@@ -17260,7 +17442,11 @@
     }
    ],
    "summary": "Layer decomposition with Seedream 5.0 Flash split an image into a base image and separate layers.",
-   "free": false
+   "free": false,
+   "promptReferenceSyntax": {
+    "kind": "none",
+    "unverified": true
+   }
   },
   {
    "key": "seedream/5-flash-text-to-image",
@@ -17579,7 +17765,11 @@
     }
    ],
    "summary": "Image editing with Seedream 5.0 Pro",
-   "free": false
+   "free": false,
+   "promptReferenceSyntax": {
+    "kind": "none",
+    "unverified": true
+   }
   },
   {
    "key": "seedream/5-pro-layer-decomposition",
@@ -17677,7 +17867,11 @@
     }
    ],
    "summary": "Layer decomposition with Seedream 5.0 Pro split an image into a base image and separate layers.",
-   "free": false
+   "free": false,
+   "promptReferenceSyntax": {
+    "kind": "none",
+    "unverified": true
+   }
   },
   {
    "key": "seedream/5-pro-text-to-image",
@@ -17894,7 +18088,11 @@
     }
    ],
    "summary": "Image editing by Seedream4.0",
-   "free": false
+   "free": false,
+   "promptReferenceSyntax": {
+    "kind": "none",
+    "unverified": true
+   }
   },
   {
    "key": "seedream/seedream-v4-text-to-image",
@@ -18139,7 +18337,11 @@
     }
    ],
    "summary": "Enhance image resolution and quality using advanced AI upscaling powered by Topaz",
-   "free": false
+   "free": false,
+   "promptReferenceSyntax": {
+    "kind": "none",
+    "unverified": true
+   }
   },
   {
    "key": "topaz/video-upscale",
@@ -18208,7 +18410,11 @@
     }
    ],
    "summary": "Enhance video resolution and quality using advanced AI upscaling powered by Topaz",
-   "free": false
+   "free": false,
+   "promptReferenceSyntax": {
+    "kind": "none",
+    "unverified": true
+   }
   },
   {
    "key": "vidu-q4/image-to-video",
@@ -18311,7 +18517,11 @@
     }
    ],
    "summary": "Query Task Status After submitting the task, you can check the progress of the task and obtain the generated results through the unified query endpoint <Card title=\"Get Task Details\" icon=\"lucide-search\" href=\"/market/common/get-task-detail\" Learn how to check the task status and",
-   "free": false
+   "free": false,
+   "promptReferenceSyntax": {
+    "kind": "none",
+    "unverified": true
+   }
   },
   {
    "key": "vidu-q4/reference-to-video",
@@ -18443,7 +18653,17 @@
     }
    ],
    "summary": "Query Task Status After submitting the task, you can check the progress of the task and obtain the generated results through the unified query endpoint <Card title=\"Get Task Details\" icon=\"lucide-search\" href=\"/market/common/get-task-detail\" Learn how to check the task status and",
-   "free": false
+   "free": false,
+   "promptReferenceSyntax": {
+    "kind": "token",
+    "format": "reference {kind} {n}",
+    "indexBase": 1,
+    "fields": [
+     "reference_image_urls",
+     "reference_audio_urls"
+    ],
+    "source": "https://docs.kie.ai/market/vidu-q4/reference-to-video"
+   }
   },
   {
    "key": "volcengine/video-to-video-lip-sync",
@@ -18533,7 +18753,11 @@
     }
    ],
    "summary": "Use this endpoint to create a new video-to-video lip sync task. Upload a video and an audio file, and the model will drive the video lip movements to match the target audio.",
-   "free": false
+   "free": false,
+   "promptReferenceSyntax": {
+    "kind": "none",
+    "unverified": true
+   }
   },
   {
    "key": "wan/2-2-a14b-image-to-video-turbo",
@@ -18639,7 +18863,11 @@
     }
    ],
    "summary": "Transform images into dynamic videos powered by Wan's advanced AI model",
-   "free": false
+   "free": false,
+   "promptReferenceSyntax": {
+    "kind": "none",
+    "unverified": true
+   }
   },
   {
    "key": "wan/2-2-a14b-speech-to-video-turbo",
@@ -18799,7 +19027,11 @@
     }
    ],
    "summary": "Generate videos using Wan's advanced AI model",
-   "free": false
+   "free": false,
+   "promptReferenceSyntax": {
+    "kind": "none",
+    "unverified": true
+   }
   },
   {
    "key": "wan/2-2-a14b-text-to-video-turbo",
@@ -18980,7 +19212,11 @@
     }
    ],
    "summary": "Content generation using Wan's advanced AI model",
-   "free": false
+   "free": false,
+   "promptReferenceSyntax": {
+    "kind": "none",
+    "unverified": true
+   }
   },
   {
    "key": "wan/2-2-animate-replace",
@@ -19069,7 +19305,11 @@
     }
    ],
    "summary": "Content generation using Wan's advanced AI model",
-   "free": false
+   "free": false,
+   "promptReferenceSyntax": {
+    "kind": "none",
+    "unverified": true
+   }
   },
   {
    "key": "wan/2-5-image-to-video",
@@ -19191,7 +19431,11 @@
     }
    ],
    "summary": "Video generation by wan/2-5-image-to-video",
-   "free": false
+   "free": false,
+   "promptReferenceSyntax": {
+    "kind": "none",
+    "unverified": true
+   }
   },
   {
    "key": "wan/2-5-text-to-video",
@@ -19488,7 +19732,11 @@
     }
    ],
    "summary": "Transform images into dynamic videos powered by Wan's advanced AI model",
-   "free": false
+   "free": false,
+   "promptReferenceSyntax": {
+    "kind": "none",
+    "unverified": true
+   }
   },
   {
    "key": "wan/2-6-flash-video-to-video",
@@ -19635,7 +19883,11 @@
     }
    ],
    "summary": "Content generation using wan/2-6-flash-video-to-video",
-   "free": false
+   "free": false,
+   "promptReferenceSyntax": {
+    "kind": "none",
+    "unverified": true
+   }
   },
   {
    "key": "wan/2-6-image-to-video",
@@ -19765,7 +20017,11 @@
     }
    ],
    "summary": "Transform static images into dynamic videos powered by Wan's advanced AI model",
-   "free": false
+   "free": false,
+   "promptReferenceSyntax": {
+    "kind": "none",
+    "unverified": true
+   }
   },
   {
    "key": "wan/2-6-text-to-video",
@@ -19991,7 +20247,11 @@
     }
    ],
    "summary": "Transform existing videos with new prompts using Wan's advanced AI model",
-   "free": false
+   "free": false,
+   "promptReferenceSyntax": {
+    "kind": "none",
+    "unverified": true
+   }
   },
   {
    "key": "wan/2-7-image-pro",
@@ -20199,7 +20459,11 @@
     }
    ],
    "summary": "Based on wan/2-7-image-pro, image generation and editing are achieved.",
-   "free": false
+   "free": false,
+   "promptReferenceSyntax": {
+    "kind": "none",
+    "unverified": true
+   }
   },
   {
    "key": "wan/2-7-image-to-video",
@@ -20314,7 +20578,11 @@
     }
    ],
    "summary": "Use this endpoint to create a new image-to-video generation task.",
-   "free": false
+   "free": false,
+   "promptReferenceSyntax": {
+    "kind": "none",
+    "unverified": true
+   }
   },
   {
    "key": "wan/2-7-image",
@@ -20521,7 +20789,11 @@
     }
    ],
    "summary": "Based on wan/2-7-image, image generation and editing are achieved.",
-   "free": false
+   "free": false,
+   "promptReferenceSyntax": {
+    "kind": "none",
+    "unverified": true
+   }
   },
   {
    "key": "wan/2-7-r2v",
@@ -20703,7 +20975,18 @@
     }
    ],
    "summary": "Use this endpoint to create a new reference-to-video generation task.",
-   "free": false
+   "free": false,
+   "promptReferenceSyntax": {
+    "kind": "token",
+    "format": "{Kind} {n}",
+    "indexBase": 1,
+    "fields": [
+     "reference_image",
+     "reference_video"
+    ],
+    "note": "Only shown in the docs' example prompt",
+    "source": "https://docs.kie.ai/market/wan/2-7-r2v"
+   }
   },
   {
    "key": "wan/2-7-text-to-video",
@@ -20816,7 +21099,11 @@
     }
    ],
    "summary": "Use this endpoint to create a new text-to-video generation task.",
-   "free": false
+   "free": false,
+   "promptReferenceSyntax": {
+    "kind": "none",
+    "unverified": true
+   }
   },
   {
    "key": "wan/2-7-videoedit",
@@ -20976,7 +21263,11 @@
     }
    ],
    "summary": "Use this endpoint to create a new video editing generation task.",
-   "free": false
+   "free": false,
+   "promptReferenceSyntax": {
+    "kind": "none",
+    "unverified": true
+   }
   },
   {
    "key": "wan/3-0-video-prime",
@@ -21149,7 +21440,18 @@
     }
    ],
    "summary": "Create Task Generate video through Wan 3.0. The high-speed model uses model=wan/3-0-video-prime;",
-   "free": false
+   "free": false,
+   "promptReferenceSyntax": {
+    "kind": "token",
+    "format": "{Kind}{n}",
+    "indexBase": 1,
+    "fields": [
+     "reference_image_urls",
+     "reference_video_urls",
+     "reference_audio_urls"
+    ],
+    "source": "https://docs.kie.ai/market/wan/3-0-video-prime"
+   }
   },
   {
    "key": "wan/3-0-video",
@@ -21322,7 +21624,18 @@
     }
    ],
    "summary": "Create Task Generate video through Wan 3.0. The standard model uses the parameter \"model=wan/3-0-video\".",
-   "free": false
+   "free": false,
+   "promptReferenceSyntax": {
+    "kind": "token",
+    "format": "{Kind}{n}",
+    "indexBase": 1,
+    "fields": [
+     "reference_image_urls",
+     "reference_video_urls",
+     "reference_audio_urls"
+    ],
+    "source": "https://docs.kie.ai/market/wan/3-0-video"
+   }
   },
   {
    "key": "z-image/z-image",
@@ -21597,7 +21910,11 @@
     }
    ],
    "summary": "Usage Guide - Create short videos (5-10 seconds) using AI visualization - Generate videos based on text descriptions or reference images - Suitable for social media content, digital art, or concept visualization",
-   "free": false
+   "free": false,
+   "promptReferenceSyntax": {
+    "kind": "none",
+    "unverified": true
+   }
   },
   {
    "key": "runway-api/generate-aleph-video",
@@ -21743,7 +22060,11 @@
     }
    ],
    "summary": "Transform existing videos into enhanced dynamic content using Runway's advanced Aleph AI model. This endpoint enables precise video-to-video generation through text-guided transformations, perfect for creating enhanced visual content from existing videos.",
-   "free": false
+   "free": false,
+   "promptReferenceSyntax": {
+    "kind": "none",
+    "unverified": true
+   }
   },
   {
    "key": "suno-api/add-instrumental",
@@ -21895,7 +22216,11 @@
     }
    ],
    "summary": "Usage Guide - Use this interface to add instrumental tracks to existing audio - Supports generation of various music style accompaniments - Allows customization of style, exclusion of specific elements, etc. - With source audio ( upload_url ), generation can proceed; title , nega",
-   "free": false
+   "free": false,
+   "promptReferenceSyntax": {
+    "kind": "none",
+    "unverified": true
+   }
   },
   {
    "key": "suno-api/add-vocals",
@@ -22055,7 +22380,11 @@
     }
    ],
    "summary": "Usage Guide - Use this interface to add vocal singing to existing audio - Supports custom lyric content and singing styles - Allows control of vocal gender, style weight, and other parameters - With source audio ( upload_url ), generation can proceed; title , negative_tags , and ",
-   "free": false
+   "free": false,
+   "promptReferenceSyntax": {
+    "kind": "none",
+    "unverified": true
+   }
   },
   {
    "key": "suno-api/boost-music-style",
@@ -22806,7 +23135,11 @@
     }
    ],
    "summary": "- This interface creates remix music from uploaded audio files. - It combines elements from multiple tracks into a coherent new piece. - upload_url_list must contain 2 audio URLs. Only the first 2 are used.",
-   "free": false
+   "free": false,
+   "promptReferenceSyntax": {
+    "kind": "none",
+    "unverified": true
+   }
   },
   {
    "key": "suno-api/generate-midi",
@@ -23063,7 +23396,11 @@
     }
    ],
    "summary": "Usage Guide - This endpoint creates music based on your text prompt - Multiple variations will be generated for each request - You can control detail level with custom mode and instrumental settings",
-   "free": false
+   "free": false,
+   "promptReferenceSyntax": {
+    "kind": "none",
+    "unverified": true
+   }
   },
   {
    "key": "suno-api/generate-persona",
@@ -23959,7 +24296,11 @@
     }
    ],
    "summary": "This interface can replace specific time segments in already generated music. It requires providing the original music's task ID and the time range to be replaced. The replaced audio will naturally blend with the original music. This endpoint is always custom mode.",
-   "free": false
+   "free": false,
+   "promptReferenceSyntax": {
+    "kind": "none",
+    "unverified": true
+   }
   },
   {
    "key": "suno-api/separate-vocals",
@@ -24285,7 +24626,11 @@
     }
    ],
    "summary": "- Separate platform-generated mixes into vocals, accompaniment, and individual instrumental components. - Supports three processing modes - separate_vocal — 2-stem separation (vocals + accompaniment) - split_stem — Up to 12-stem separation - split_stem_advanced — Advanced multi-s",
-   "free": false
+   "free": false,
+   "promptReferenceSyntax": {
+    "kind": "none",
+    "unverified": true
+   }
   },
   {
    "key": "suno-api/suno-voice-check-voice",
@@ -24631,7 +24976,11 @@
     }
    ],
    "summary": "Submit the original validation task ID, the user's verification audio URL, and optional voice metadata such as voice_name , description , and style . The system will validate the recording and create a reusable custom voice.",
-   "free": true
+   "free": true,
+   "promptReferenceSyntax": {
+    "kind": "none",
+    "unverified": true
+   }
   },
   {
    "key": "suno-api/suno-voice-regenerate",
@@ -24963,7 +25312,11 @@
     }
    ],
    "summary": "Generate a validation phrase for the Suno Voice custom voice workflow.",
-   "free": true
+   "free": true,
+   "promptReferenceSyntax": {
+    "kind": "none",
+    "unverified": true
+   }
   },
   {
    "key": "suno-api/upload-and-cover-audio",
@@ -25162,7 +25515,11 @@
     }
    ],
    "summary": "Parameter Usage Guide",
-   "free": false
+   "free": false,
+   "promptReferenceSyntax": {
+    "kind": "none",
+    "unverified": true
+   }
   },
   {
    "key": "suno-api/upload-and-extend-audio",
@@ -25352,7 +25709,11 @@
     }
    ],
    "summary": "This API extends audio while preserving the original style, generating a longer and seamless audio track.",
-   "free": false
+   "free": false,
+   "promptReferenceSyntax": {
+    "kind": "none",
+    "unverified": true
+   }
   },
   {
    "key": "veo3-api/extend-video",
@@ -25760,7 +26121,11 @@
     }
    ],
    "summary": "Our Veo 3.1 Generation API is more than a direct wrapper around Google's baseline. It layers extensive optimisation and reliability tooling on top of the official models, giving you greater flexibility and markedly higher success rates (see [kie.ai/pricing](https //kie.ai/pricing",
-   "free": false
+   "free": false,
+   "promptReferenceSyntax": {
+    "kind": "none",
+    "unverified": true
+   }
   },
   {
    "key": "veo3-api/get-veo-3-1080-p-video",

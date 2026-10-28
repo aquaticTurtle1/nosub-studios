@@ -102,7 +102,7 @@ export function KeyDialog({ open, onOpenChange }: { open: boolean; onOpenChange:
         )}
 
         {result?.valid === true && (
-          <p className="text-sm text-emerald-600 dark:text-emerald-400">Key saved and accepted. Balance: {result.balance} credits.</p>
+          <p className="text-sm text-np-success">Key saved and accepted. Balance: {result.balance} credits.</p>
         )}
         {result?.valid === false && (
           <div className="text-sm">

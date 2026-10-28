@@ -45,3 +45,9 @@ next-env.d.ts
 # secrets
 .env.local
 !.env.example
+.playwright-mcp/
+# e2e test server build + data, Playwright output
+/.next-e2e/
+/.e2e-data/
+/test-results/
+/playwright-report/

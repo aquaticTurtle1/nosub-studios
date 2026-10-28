@@ -1,33 +1,29 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Inter, Space_Grotesk } from "next/font/google";
+import { AppShell } from "@/components/app/app-shell";
 import { StudioProvider } from "@/components/studio/app-context";
-import { Sidebar } from "@/components/studio/sidebar";
+import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
+// Self-hosted; the font families match --np-font-sans / --np-font-display.
+const inter = Inter({ subsets: ["latin", "cyrillic"], weight: ["400", "500", "600"], variable: "--font-inter" });
+const spaceGrotesk = Space_Grotesk({ subsets: ["latin"], weight: ["500", "600"], variable: "--font-space-grotesk" });
 
 export const metadata: Metadata = {
-  title: "Kie.ai Studio",
+  title: "Studio",
   description: "Local media-generation studio on the Kie.ai API",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="en" className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}>
-      <body className="flex min-h-full flex-col md:flex-row">
+    // The font variables register the @font-face rules; tokens pick the families by name.
+    <html lang="en" className={`dark ${inter.variable} ${spaceGrotesk.variable}`}>
+      <body className="min-h-dvh antialiased">
         <TooltipProvider>
           <StudioProvider>
-            <Sidebar />
-            <div className="flex min-w-0 flex-1 flex-col">{children}</div>
+            <AppShell>{children}</AppShell>
+            <Toaster position="bottom-right" />
           </StudioProvider>
         </TooltipProvider>
       </body>

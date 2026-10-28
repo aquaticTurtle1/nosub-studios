@@ -110,17 +110,26 @@ export function validateInput(
 export function isUrlField(name: string, s: JsonSchema): boolean {
   const str = typeOf(s) === "string" || (typeOf(s) === "array" && s.items && typeOf(s.items) === "string");
   if (!str) return false;
+  // Web-page links and document uploads (Wan 3.0) are not media references.
+  if (/link|file_urls$/i.test(name)) return false;
   if (s.format === "uri" || s.items?.format === "uri") return true;
   const desc = (s.description ?? "").toLowerCase();
-  return /(^|_)(url|urls|image|images|video|audio|mask)(_|$)|Urls?$/i.test(name) && /\burls?\b/.test(desc);
+  // A field named *_url / *_urls is a URL input even when its description never says "URL".
+  if (/(^|_)urls?$|Urls?$/.test(name)) return true;
+  return /(^|_)(image|images|video|audio|mask)(_|$)/i.test(name) && /\burls?\b/.test(desc);
 }
 
 /** Guesses which media a URL field expects, for the upload dropzone `accept`. */
 export function acceptFor(name: string, s: JsonSchema): string {
-  const text = `${name} ${s.description ?? ""}`.toLowerCase();
-  const kinds: string[] = [];
-  if (/image|frame|photo|picture|mask|portrait|png|jpe?g|webp/.test(text)) kinds.push("image/*");
-  if (/video|clip|mp4|mov/.test(text)) kinds.push("video/*");
-  if (/audio|voice|speech|music|song|mp3|wav|sound/.test(text)) kinds.push("audio/*");
+  const kindsIn = (text: string) => {
+    const kinds: string[] = [];
+    if (/image|frame|photo|picture|mask|portrait|loop|png|jpe?g|webp/.test(text)) kinds.push("image/*");
+    if (/video|clip|mp4|mov/.test(text)) kinds.push("video/*");
+    if (/audio|voice|speech|music|song|mp3|wav|sound|verify|upload_url/.test(text)) kinds.push("audio/*");
+    return kinds;
+  };
+  // The field name is the most reliable signal; the description often mentions other media in passing.
+  const byName = kindsIn(name.toLowerCase());
+  const kinds = byName.length ? byName : kindsIn((s.description ?? "").toLowerCase());
   return kinds.length ? kinds.join(",") : "image/*,video/*,audio/*";
 }

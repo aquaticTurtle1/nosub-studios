@@ -29,14 +29,20 @@ export function SchemaForm({
   onChange,
   taskIds,
   issues,
+  only,
 }: {
   schema: JsonSchema;
   values: FormValues;
   onChange: (v: FormValues) => void;
   taskIds: string[];
   issues: Record<string, string>;
+  /** Render only these top-level fields (others keep their values). */
+  only?: string[];
 }) {
-  return <ObjectFields schema={schema} value={values} onChange={(v) => onChange(v as FormValues)} ctx={{ taskIds, issues }} path="" />;
+  const shown = only
+    ? { ...schema, properties: Object.fromEntries(Object.entries(schema.properties ?? {}).filter(([k]) => only.includes(k))) }
+    : schema;
+  return <ObjectFields schema={shown} value={values} onChange={(v) => onChange(v as FormValues)} ctx={{ taskIds, issues }} path="" />;
 }
 
 function ObjectFields({
@@ -110,7 +116,7 @@ function Field({
     control = (
       <div className="flex items-center gap-2">
         <Switch id={id} checked={(value ?? schema.default ?? false) as boolean} onCheckedChange={(c) => onChange(c)} />
-        <span className="text-xs text-muted-foreground">{value === undefined ? "not set (provider default)" : String(value)}</span>
+        <span className="text-xs text-muted-foreground">{value === undefined ? "Auto" : String(value)}</span>
         {value !== undefined && (
           <button className="text-xs text-muted-foreground underline" onClick={() => onChange(undefined)}>
             reset
@@ -186,10 +192,7 @@ function Field({
       <Label htmlFor={id} className="flex items-baseline gap-1">
         <span>{humanize(name)}</span>
         {required && <span className="text-destructive">*</span>}
-        <code className="ml-auto text-[10px] font-normal text-muted-foreground">
-          {name}
-          {range}
-        </code>
+        {range && <span className="ml-auto text-[11px] font-normal text-np-text-muted">{range.trim()}</span>}
       </Label>
       {control}
       {schema.description && <FieldHelp text={schema.description} />}
@@ -223,10 +226,10 @@ function EnumSelect({ id, schema, value, onChange }: { id: string; schema: JsonS
   return (
     <Select value={current} onValueChange={(s) => onChange(s === UNSET || s === null ? undefined : cast(String(s)))}>
       <SelectTrigger id={id} className="w-full">
-        <SelectValue>{(v: string) => (v === UNSET ? "Not set (provider default)" : v)}</SelectValue>
+        <SelectValue>{(v: string) => (v === UNSET ? "Auto" : v)}</SelectValue>
       </SelectTrigger>
       <SelectContent>
-        <SelectItem value={UNSET}>Not set (provider default)</SelectItem>
+        <SelectItem value={UNSET}>Auto</SelectItem>
         {options.map((o) => (
           <SelectItem key={o} value={o}>
             {o}

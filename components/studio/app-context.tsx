@@ -1,9 +1,10 @@
 "use client";
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
-import type { Category } from "@/lib/catalog/types";
 import type { SerializedKieError } from "@/lib/kie/errors";
 import type { KeySource } from "@/lib/server/key";
+import type { TaskRecord } from "@/lib/task-types";
+import type { LibraryItem } from "@/components/app/generation/use-generator";
 import { api, ApiError } from "./api";
 
 interface Credits {
@@ -13,12 +14,29 @@ interface Credits {
   loading: boolean;
 }
 
+export interface Handoff {
+  mode: "image" | "video" | "audio" | "tools";
+  /** Local files to attach (uploads or generated outputs). */
+  items: LibraryItem[];
+  /** "Reuse prompt" from another page. */
+  reuse?: TaskRecord;
+  /** Prefer a model with this operation when attaching (e.g. "image-to-video"). */
+  operation?: string;
+  /** Explore: open the page on this family (lib/catalog/families.ts). */
+  family?: string;
+  /** Explore: add this prompt helper (lib/presets.ts). */
+  preset?: string;
+  /** Explore: open the Media library right away ("Animate a photo"). */
+  openLibrary?: boolean;
+}
+
 interface StudioState {
   keySource: KeySource;
   keyLoaded: boolean;
   credits: Credits;
-  category: Category;
-  setCategory: (c: Category) => void;
+  /** Files handed from one page to another ("Animate", "Use as reference"), consumed once. */
+  handoff: Handoff | null;
+  setHandoff: (h: Handoff | null) => void;
   refreshKey: () => Promise<void>;
   refreshCredits: () => Promise<void>;
 }
@@ -28,7 +46,7 @@ const Ctx = createContext<StudioState | null>(null);
 export function StudioProvider({ children }: { children: React.ReactNode }) {
   const [keySource, setKeySource] = useState<KeySource>(null);
   const [keyLoaded, setKeyLoaded] = useState(false);
-  const [category, setCategory] = useState<Category>("image");
+  const [handoff, setHandoff] = useState<Handoff | null>(null);
   const [credits, setCredits] = useState<Credits>({ balance: null, error: null, checkedAt: null, loading: false });
 
   const refreshCredits = useCallback(async () => {
@@ -56,8 +74,8 @@ export function StudioProvider({ children }: { children: React.ReactNode }) {
   }, [refreshKey]);
 
   const value = useMemo(
-    () => ({ keySource, keyLoaded, credits, category, setCategory, refreshKey, refreshCredits }),
-    [keySource, keyLoaded, credits, category, refreshKey, refreshCredits],
+    () => ({ keySource, keyLoaded, credits, handoff, setHandoff, refreshKey, refreshCredits }),
+    [keySource, keyLoaded, credits, handoff, refreshKey, refreshCredits],
   );
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }
