@@ -230,9 +230,9 @@ export const cloudBackend: StudioBackend = {
       return { configured: !!(await loadKey()), source: "browser" };
     },
     async connect(key, opts) {
-      await saveKey(key, opts);
+      const { remembered } = await saveKey(key, opts);
       try {
-        return { balance: await getCredits(key) };
+        return { balance: await getCredits(key), remembered };
       } catch (e) {
         throw toApiError(e);
       }

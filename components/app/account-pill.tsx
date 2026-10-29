@@ -7,6 +7,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import type { TaskRecord } from "@/lib/task-types";
 import { cn } from "@/lib/utils";
 import { backend } from "@/lib/backend";
+import { isCloud } from "@/lib/mode";
 import { useStudio } from "@/components/studio/app-context";
 import { ErrorText } from "@/components/studio/error-text";
 import { KeyDialog } from "@/components/studio/key-dialog";
@@ -79,7 +80,7 @@ export function AccountPill() {
           <div className="grid gap-2">
             <div className="text-xs font-medium text-np-text-muted">API key</div>
             <div className="text-[13px] text-np-text-secondary">
-              {keySource === "env" ? "From .env.local (takes priority)" : keySource === "cookie" ? "Saved on this computer" : "Not connected"}
+              {keySource === "env" ? "From .env.local (takes priority)" : keySource === "cookie" ? "Saved on this computer" : isCloud() && keySource ? "Stored in this browser" : "Not connected"}
             </div>
             <Button variant="secondary" onClick={() => setKeyOpen(true)}>
               <KeyRound /> Manage API key

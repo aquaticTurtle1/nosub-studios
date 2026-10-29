@@ -29,7 +29,7 @@ export interface StudioBackend {
      * Saves the key, then checks it. A key that is saved but fails the credit check
      * throws ApiError with the Kie error; on success resolves with the balance.
      */
-    connect(key: string, opts: { remember: boolean }): Promise<{ balance?: number }>;
+    connect(key: string, opts: { remember: boolean }): Promise<{ balance?: number; remembered?: boolean }>;
     disconnect(): Promise<void>;
   };
   credits(): Promise<{ balance: number; checkedAt: number }>;
