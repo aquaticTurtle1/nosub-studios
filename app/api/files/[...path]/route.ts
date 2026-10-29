@@ -1,3 +1,4 @@
+import { localOnly } from "@/lib/server/mode-guard";
 import fs from "node:fs";
 import path from "node:path";
 import { Readable } from "node:stream";
@@ -21,6 +22,8 @@ const TYPES: Record<string, string> = {
 
 /** Serves locally stored outputs (with Range support so video/audio can seek). */
 export async function GET(req: Request, ctx: RouteContext<"/api/files/[...path]">) {
+  const off = localOnly();
+  if (off) return off;
   const { path: parts } = await ctx.params;
   const file = resolveOutputPath(parts.map(decodeURIComponent).join("/"));
   if (!file) return new Response("Not found", { status: 404 });

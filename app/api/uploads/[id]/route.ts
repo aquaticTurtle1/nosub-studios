@@ -1,9 +1,12 @@
+import { localOnly } from "@/lib/server/mode-guard";
 import fs from "node:fs";
 import { Readable } from "node:stream";
 import { getUpload } from "@/lib/server/uploads";
 
 /** Serves a saved reference file (with Range support so video/audio can seek). */
 export async function GET(req: Request, ctx: RouteContext<"/api/uploads/[id]">) {
+  const off = localOnly();
+  if (off) return off;
   const { id } = await ctx.params;
   const u = getUpload(id);
   if (!u) return new Response("Not found", { status: 404 });

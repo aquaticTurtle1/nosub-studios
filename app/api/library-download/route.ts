@@ -1,3 +1,4 @@
+import { localOnly } from "@/lib/server/mode-guard";
 import fs from "node:fs";
 import path from "node:path";
 import { resolveOutputPath } from "@/lib/server/storage";
@@ -8,6 +9,8 @@ const slug = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(
 
 /** Library "Download": the local files of the chosen tasks as one ZIP (?tasks=id,id,…). */
 export async function GET(req: Request) {
+  const off = localOnly();
+  if (off) return off;
   const ids = (new URL(req.url).searchParams.get("tasks") ?? "").split(",").filter(Boolean).slice(0, 200);
   const entries: { name: string; data: Buffer; date: Date }[] = [];
   for (const id of ids) {

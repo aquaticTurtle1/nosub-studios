@@ -1,3 +1,4 @@
+import { localOnly } from "@/lib/server/mode-guard";
 import { verifyWebhook } from "@/lib/kie/webhook";
 import { findByKieTaskId, markWebhook, pollTask } from "@/lib/server/tasks";
 
@@ -7,6 +8,8 @@ import { findByKieTaskId, markWebhook, pollTask } from "@/lib/server/tasks";
  * body, so the body is never trusted: we just poll recordInfo right away.
  */
 export async function POST(req: Request) {
+  const off = localOnly();
+  if (off) return off;
   if (process.env.KIE_WEBHOOK_ENABLED !== "1") return new Response("webhooks disabled", { status: 404 });
   const body = (await req.json().catch(() => null)) as { data?: { taskId?: string; task_id?: string } } | null;
   const taskId = body?.data?.taskId ?? body?.data?.task_id;

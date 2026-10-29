@@ -1,13 +1,18 @@
+import { localOnly } from "@/lib/server/mode-guard";
 import { KieError } from "@/lib/kie/errors";
 import { errorResponse, noStore } from "@/lib/server/http";
 import { listUploads, saveUpload, UploadError } from "@/lib/server/uploads";
 
 /** Local reference library: files are saved here, never sent to Kie.ai until submit. */
 export async function GET() {
+  const off = localOnly();
+  if (off) return off;
   return noStore({ uploads: listUploads() });
 }
 
 export async function POST(req: Request) {
+  const off = localOnly();
+  if (off) return off;
   const form = await req.formData().catch(() => null);
   const file = form?.get("file");
   if (!(file instanceof File)) return errorResponse(new KieError("validation", "No file in upload"));

@@ -1,3 +1,4 @@
+import { localOnly } from "@/lib/server/mode-guard";
 import { z } from "zod";
 import { getCredits } from "@/lib/kie/client";
 import { KieError, serializeError } from "@/lib/kie/errors";
@@ -6,6 +7,8 @@ import { clearKeyCookie, resolveApiKey, setKeyCookie } from "@/lib/server/key";
 
 /** Key status only — the key itself is never returned. */
 export async function GET() {
+  const off = localOnly();
+  if (off) return off;
   const { key, source } = await resolveApiKey();
   return noStore({ configured: Boolean(key), source });
 }
@@ -14,6 +17,8 @@ const Body = z.object({ key: z.string().trim().min(8).max(512) });
 
 /** Saves the key in an HTTP-only cookie, then checks it against the credit endpoint. */
 export async function POST(req: Request) {
+  const off = localOnly();
+  if (off) return off;
   const { source } = await resolveApiKey();
   if (source === "env") {
     return errorResponse(new KieError("validation", "KIE_API_KEY is set in .env.local and takes priority; remove it there first."));
@@ -31,6 +36,8 @@ export async function POST(req: Request) {
 }
 
 export async function DELETE() {
+  const off = localOnly();
+  if (off) return off;
   const { source } = await resolveApiKey();
   await clearKeyCookie();
   return noStore({ removed: true, envStillActive: source === "env" });

@@ -15,3 +15,9 @@ export async function hit(bucket: string, limit: number, windowMs: number): Prom
   });
   return Number(r.rows[0].count) <= limit;
 }
+
+/** Drop rate rows whose window started more than a day ago. */
+export async function pruneRate(now: number): Promise<void> {
+  const c = await readyDb();
+  await c.execute({ sql: "DELETE FROM rate WHERE window_start < ?", args: [now - 24 * 60 * 60 * 1000] });
+}

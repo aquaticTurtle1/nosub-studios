@@ -1,3 +1,4 @@
+import { localOnly } from "@/lib/server/mode-guard";
 import { z } from "zod";
 import { KieError } from "@/lib/kie/errors";
 import { errorResponse, noStore } from "@/lib/server/http";
@@ -6,6 +7,8 @@ import { getTask, pollTask, resumeTracking, retryDownloads, stopTracking } from 
 
 /** Returns the task, polling Kie.ai first when the backoff schedule says it is due. */
 export async function GET(_req: Request, ctx: RouteContext<"/api/tasks/[id]">) {
+  const off = localOnly();
+  if (off) return off;
   const { id } = await ctx.params;
   const { key } = await resolveApiKey();
   const task = await pollTask(id, key);
@@ -16,6 +19,8 @@ export async function GET(_req: Request, ctx: RouteContext<"/api/tasks/[id]">) {
 const Action = z.object({ action: z.enum(["stop", "resume", "redownload", "poll"]) });
 
 export async function POST(req: Request, ctx: RouteContext<"/api/tasks/[id]">) {
+  const off = localOnly();
+  if (off) return off;
   const { id } = await ctx.params;
   const parsed = Action.safeParse(await req.json().catch(() => null));
   if (!parsed.success) return errorResponse(new KieError("validation", "Unknown action"));

@@ -1,9 +1,12 @@
+import { localOnly } from "@/lib/server/mode-guard";
 import { getCredits } from "@/lib/kie/client";
 import { KieError } from "@/lib/kie/errors";
 import { errorResponse, noStore } from "@/lib/server/http";
 import { resolveApiKey } from "@/lib/server/key";
 
 export async function GET() {
+  const off = localOnly();
+  if (off) return off;
   const { key, source } = await resolveApiKey();
   if (!key) return errorResponse(new KieError("missing_key", "Connect an API key first."), { source });
   try {

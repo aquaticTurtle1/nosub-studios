@@ -1,3 +1,4 @@
+import { localOnly } from "@/lib/server/mode-guard";
 import { GenerateBody, prepareGeneration } from "@/lib/generation/prepare";
 import { KieError } from "@/lib/kie/errors";
 import { errorResponse, noStore } from "@/lib/server/http";
@@ -13,6 +14,8 @@ function callBackUrl(): string | undefined {
 }
 
 export async function POST(req: Request) {
+  const off = localOnly();
+  if (off) return off;
   const parsed = GenerateBody.safeParse(await req.json().catch(() => null));
   if (!parsed.success) return errorResponse(new KieError("validation", "Malformed generate request"));
   const { idempotencyKey } = parsed.data;

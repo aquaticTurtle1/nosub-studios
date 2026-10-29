@@ -1,3 +1,4 @@
+import { localOnly } from "@/lib/server/mode-guard";
 import { z } from "zod";
 import { KieError } from "@/lib/kie/errors";
 import { readDraft, writeDraft } from "@/lib/server/drafts";
@@ -33,6 +34,8 @@ export type DraftBody = z.infer<typeof Draft>;
 
 /** Per-mode panel draft. References whose local file is gone are left out and named in `dropped`. */
 export async function GET(_req: Request, ctx: RouteContext<"/api/drafts/[mode]">) {
+  const off = localOnly();
+  if (off) return off;
   const { mode } = await ctx.params;
   if (!KEY.test(mode)) return errorResponse(new KieError("not_found", "Unknown mode"));
   const parsed = Draft.safeParse(readDraft(mode));
@@ -45,6 +48,8 @@ export async function GET(_req: Request, ctx: RouteContext<"/api/drafts/[mode]">
 }
 
 export async function PUT(req: Request, ctx: RouteContext<"/api/drafts/[mode]">) {
+  const off = localOnly();
+  if (off) return off;
   const { mode } = await ctx.params;
   if (!KEY.test(mode)) return errorResponse(new KieError("not_found", "Unknown mode"));
   const parsed = Draft.safeParse(await req.json().catch(() => null));

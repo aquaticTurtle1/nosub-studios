@@ -1,3 +1,4 @@
+import { localOnly } from "@/lib/server/mode-guard";
 import { randomUUID } from "node:crypto";
 import { uploadFile } from "@/lib/kie/client";
 import { KieError } from "@/lib/kie/errors";
@@ -37,6 +38,8 @@ const ALLOWED = new Set([
 ]);
 
 export async function POST(req: Request) {
+  const off = localOnly();
+  if (off) return off;
   const { key } = await resolveApiKey();
   if (!key) return errorResponse(new KieError("missing_key", "Connect an API key first."));
 
