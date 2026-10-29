@@ -2,22 +2,13 @@ import "server-only";
 import { createHash, randomUUID } from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
+import { UPLOAD_LIMITS, uploadLimitMessage } from "@/lib/upload-limits";
 import type { RefKind } from "@/lib/ui/fields";
 import type { UploadRecord } from "@/lib/ui/local-ref";
 import { DATA_DIR, db } from "./db";
 
 /** Files added as references (drop, picker, paste). Kept locally; sent to Kie.ai only at submit. */
 export const UPLOAD_DIR = path.join(DATA_DIR, "uploads");
-
-/**
- * Local caps. The File Upload API documents no hard cap for stream upload;
- * per-model limits (often 10–50 MB images, ≤100 MB video) are checked in the panel.
- */
-const LIMITS: Record<RefKind, number> = {
-  image: 50 * 1024 * 1024,
-  video: 500 * 1024 * 1024,
-  audio: 500 * 1024 * 1024,
-};
 
 const EXT_BY_TYPE: Record<string, string> = {
   "image/png": ".png",
@@ -106,7 +97,7 @@ export async function saveUpload(file: File, probe: { width: FormDataEntryValue 
   if (!ext) throw new UploadError(`${file.name}: ${file.type || "this file type"} can't be used as a reference.`);
   const kind = file.type.split("/")[0] as RefKind;
   if (file.size === 0) throw new UploadError(`${file.name} is empty.`);
-  if (file.size > LIMITS[kind]) throw new UploadError(`${kind} files are limited to ${Math.round(LIMITS[kind] / 1048576)} MB here.`);
+  if (file.size > UPLOAD_LIMITS[kind]) throw new UploadError(uploadLimitMessage(kind));
 
   const bytes = Buffer.from(await file.arrayBuffer());
   const sha256 = createHash("sha256").update(bytes).digest("hex");

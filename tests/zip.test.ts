@@ -3,7 +3,7 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
-import { zip } from "@/lib/server/zip";
+import { zip } from "@/lib/zip";
 
 describe("zip", () => {
   it("writes an archive that standard tools can read back", () => {

@@ -197,3 +197,17 @@ export function deleteUpload(id: string): Promise<void> {
     await done(tx);
   });
 }
+
+/** Overwrites a task but keeps its idempotency key (a task from the server history gets a synthetic one). */
+export function updateTask(t: TaskRecord, o: { synced: boolean }): Promise<void> {
+  return withDb(async (db) => {
+    const tx = db.transaction(TASKS, "readwrite");
+    const store = tx.objectStore(TASKS);
+    const req = store.get(t.id);
+    req.onsuccess = () => {
+      const row = req.result as TaskRow | undefined;
+      store.put({ task: t, idempotencyKey: row?.idempotencyKey ?? `remote:${t.id}`, synced: o.synced } satisfies TaskRow);
+    };
+    await done(tx);
+  });
+}

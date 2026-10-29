@@ -45,9 +45,6 @@ export const localBackend: StudioBackend = {
     async list() {
       return (await api<{ uploads: UploadRecord[] }>("/api/uploads")).uploads;
     },
-    async remove(id) {
-      await api(`/api/uploads/${id}`, { method: "DELETE" });
-    },
   },
   drafts: {
     get: (mode) => api<{ draft: Draft | null; dropped: string[] }>(`/api/drafts/${mode}`),

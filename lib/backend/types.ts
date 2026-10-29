@@ -40,7 +40,7 @@ export interface StudioBackend {
     act(id: string, action: "stop" | "resume" | "redownload" | "poll"): Promise<TaskRecord>;
   };
   generate(body: GenerateBody): Promise<{ task: TaskRecord; duplicate: boolean }>;
-  uploads: { save(file: File): Promise<UploadRecord>; list(): Promise<UploadRecord[]>; remove(id: string): Promise<void> };
+  uploads: { save(file: File): Promise<UploadRecord>; list(): Promise<UploadRecord[]> };
   drafts: {
     /** `dropped` names references whose file is gone and were left out of the draft. */
     get(mode: string): Promise<{ draft: Draft | null; dropped: string[] }>;

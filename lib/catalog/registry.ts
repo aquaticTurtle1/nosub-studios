@@ -1,4 +1,4 @@
-import "server-only";
+// Isomorphic: the cloud backend runs prepareGeneration and the adapters in the browser.
 import data from "./generated/catalog.json";
 import { modelMeta } from "./meta";
 import type { Catalog, CatalogModel, CatalogSummary } from "./types";
