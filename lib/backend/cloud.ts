@@ -263,9 +263,11 @@ export const cloudBackend: StudioBackend = {
       } catch {
         // server down: local history only
       }
+      const pending = new Set((await store.unsynced()).map((t) => t.id));
       return mergeTasks(local, remote)
         .filter((t) => (!q.category || t.category === q.category) && (!q.activeOnly || isActive(t)))
-        .slice(0, q.limit ?? 200);
+        .slice(0, q.limit ?? 200)
+        .map((t) => (pending.has(t.id) ? { ...t, unsynced: true } : t));
     },
     async get(id) {
       return pollAndSave(await loadTask(id), await loadKey());

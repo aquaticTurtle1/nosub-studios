@@ -55,6 +55,8 @@ export interface TaskRecord {
   pollAttempts: number;
   pollError: SerializedKieError | null;
   webhookAt: number | null;
+  /** Cloud UI only: saved in this browser, not yet in the server history. Never stored. */
+  unsynced?: boolean;
 }
 
 export const TERMINAL: LocalState[] = ["success", "fail", "submit_unknown", "submit_failed"];

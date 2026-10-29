@@ -3,6 +3,8 @@
 import { AlertTriangle, CircleAlert, Clapperboard, Download, FileAudio, Maximize2, Pause, Play, RotateCcw, Square, Undo2, ImagePlus } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { backend } from "@/lib/backend";
+import { daysLeft } from "@/lib/cloud/expiry";
+import { isCloud } from "@/lib/mode";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { isTerminal, type TaskOutput, type TaskRecord } from "@/lib/task-types";
 import { humanError } from "@/lib/ui/human-error";
@@ -58,7 +60,7 @@ export function MediaCard({
   const aspect = aspectOf(task, fallbackAspect);
   const prompt = promptOf(task);
 
-  if (task.state === "success" && output) return <DoneCard task={task} output={output} aspect={aspect} prompt={prompt} onAction={onAction} />;
+  if (task.state === "success" && output) return <DoneCard task={task} output={output} aspect={aspect} prompt={prompt} now={now} onAction={onAction} />;
 
   if (task.state === "success") {
     // Text / ID results (lyrics, detection results, Omni IDs).
@@ -182,16 +184,21 @@ function DoneCard({
   output,
   aspect,
   prompt,
+  now,
   onAction,
 }: {
   task: TaskRecord;
   output: TaskOutput;
   aspect: string;
   prompt?: string;
+  now: number;
   onAction: (a: CardAction, task: TaskRecord, output?: TaskOutput) => void;
 }) {
   const video = useRef<HTMLVideoElement>(null);
-  const src = fileUrl(output);
+  // Cloud only: Kie.ai keeps files 14 days. Expired files are not loaded at all.
+  const days = isCloud() ? daysLeft(task, now) : null;
+  const expired = days !== null && days <= 0;
+  const src = expired ? null : fileUrl(output);
   const act = (a: CardAction) => () => onAction(a, task, output);
 
   return (
@@ -203,8 +210,12 @@ function DoneCard({
       }}
       onMouseLeave={() => video.current?.pause()}
     >
-      <button onClick={act("open")} className="block w-full" aria-label={`Open ${task.modelTitle} result`}>
-        {!src ? (
+      <button onClick={act("open")} className="block w-full" aria-label={`Open ${task.modelTitle} result`} disabled={expired}>
+        {expired ? (
+          <div className="flex items-center justify-center p-6 text-xs text-np-text-secondary" style={{ aspectRatio: aspect }}>
+            File expired
+          </div>
+        ) : !src ? (
           <div className="flex items-center justify-center p-6 text-xs text-np-warning" style={{ aspectRatio: aspect }}>
             Not saved locally. Use “Retry download”.
           </div>
@@ -222,6 +233,19 @@ function DoneCard({
           </div>
         )}
       </button>
+      {days !== null && !expired && (
+        <span
+          className={cn(
+            "absolute top-3 left-3 rounded-np-md bg-np-scrim px-2 py-1 text-xs",
+            days <= 3 ? "text-np-warning" : "text-np-text-secondary",
+          )}
+        >
+          Available {days} more days
+        </span>
+      )}
+      {isCloud() && task.unsynced && (
+        <span className="absolute top-3 right-3 rounded-np-md bg-np-scrim px-2 py-1 text-xs text-np-text-secondary">Only on this device</span>
+      )}
       {src && output.kind === "audio" && (
         <div className="px-4 pb-4">
           <audio src={src} controls className="w-full" />
@@ -239,8 +263,8 @@ function DoneCard({
         <IconAction label="Reuse prompt" onClick={act("reuse")} icon={Undo2} />
         {output.kind === "image" && src && <IconAction label="Use as reference" onClick={act("reference")} icon={ImagePlus} />}
         {output.kind === "image" && src && <IconAction label="Animate" onClick={act("animate")} icon={Clapperboard} />}
-        <IconAction label="Open" onClick={act("open")} icon={Maximize2} />
-        {src ? (
+        {!expired && <IconAction label="Open" onClick={act("open")} icon={Maximize2} />}
+        {expired ? null : src ? (
           <a
             href={fileUrl(output, true)!}
             className="flex size-8 items-center justify-center rounded-np-md text-np-text-primary hover:bg-np-bg-3"
