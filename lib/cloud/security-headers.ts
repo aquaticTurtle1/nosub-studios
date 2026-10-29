@@ -3,11 +3,9 @@
  * The Kie.ai key lives in the browser, so the page must not be framed, must not load foreign scripts and may
  * talk only to Studio and to Kie.ai hosts (connect-src is the barrier that keeps the key from being sent elsewhere).
  *
- * script-src uses 'unsafe-inline' rather than a per-request nonce on purpose: with cacheComponents the app shell
- * is prerendered, and Next cannot put a nonce on the inline scripts of a prerendered shell (Next docs, "Content
- * Security Policy": nonces need dynamic rendering and are incompatible with PPR). A nonce in the policy would make
- * browsers block those scripts and the app would never hydrate (verified with a production build). 'unsafe-eval'
- * stays off, and foreign script origins, objects, framing and base-uri changes stay blocked.
+ * script-src is strict: 'self' + a per-request nonce + 'strict-dynamic', no 'unsafe-inline', no eval. The nonce is
+ * made in proxy.ts for every page request; Next puts it on its own scripts while rendering. That needs dynamic
+ * rendering, so the cloud build runs with cacheComponents off (next.config.ts) and the root layout awaits connection().
  */
 
 /** Hosts Kie.ai serves results and uploads from (see the catalog docs and Explore examples). */
@@ -27,13 +25,13 @@ function origin(url: string | undefined): string[] {
   }
 }
 
-/** The CSP. A custom API base (staging, tests) is added to connect-src. */
-export function contentSecurityPolicy(env: Record<string, string | undefined> = process.env): string {
+/** The CSP for one request (fresh nonce). A custom API base (staging, tests) is added to connect-src. */
+export function contentSecurityPolicy(nonce: string, env: Record<string, string | undefined> = process.env): string {
   const connectExtra = [...origin(env.NEXT_PUBLIC_KIE_API_BASE_URL), ...origin(env.NEXT_PUBLIC_KIE_UPLOAD_BASE_URL)];
   const connect = [...new Set([...API_HOSTS, ...RESULT_HOSTS, ...connectExtra])];
   return [
     "default-src 'self'",
-    "script-src 'self' 'unsafe-inline'",
+    `script-src 'self' 'nonce-${nonce}' 'strict-dynamic'`,
     "style-src 'self' 'unsafe-inline'",
     `connect-src 'self' ${connect.join(" ")}`,
     `img-src 'self' blob: data: ${RESULT_HOSTS.join(" ")}`,
@@ -46,9 +44,8 @@ export function contentSecurityPolicy(env: Record<string, string | undefined> = 
   ].join("; ");
 }
 
-/** All cloud-mode page headers. */
-export const securityHeaders = (env: Record<string, string | undefined> = process.env): { key: string; value: string }[] => [
-  { key: "Content-Security-Policy", value: contentSecurityPolicy(env) },
+/** Cloud-mode page headers that do not depend on the request. The CSP is set per request in proxy.ts. */
+export const securityHeaders = (): { key: string; value: string }[] => [
   { key: "Strict-Transport-Security", value: "max-age=63072000; includeSubDomains" },
   { key: "X-Content-Type-Options", value: "nosniff" },
   { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },

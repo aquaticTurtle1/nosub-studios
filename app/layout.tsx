@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { connection } from "next/server";
 import { Inter, Space_Grotesk } from "next/font/google";
 import { AppShell } from "@/components/app/app-shell";
 import { StudioProvider } from "@/components/studio/app-context";
@@ -15,7 +16,9 @@ export const metadata: Metadata = {
   description: "Local media-generation studio on the Kie.ai API",
 };
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+export default async function RootLayout({ children }: LayoutProps<"/">) {
+  // Cloud: render per request so the proxy.ts CSP nonce can reach Next's scripts (cacheComponents is off there).
+  if (process.env.NEXT_PUBLIC_STUDIO_MODE === "cloud") await connection();
   return (
     // The font variables register the @font-face rules; tokens pick the families by name.
     <html lang="en" className={`dark ${inter.variable} ${spaceGrotesk.variable}`}>

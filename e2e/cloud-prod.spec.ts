@@ -10,7 +10,9 @@ test("CSP header present", async ({ request }) => {
   const csp = res.headers()["content-security-policy"];
   expect(csp).toBeTruthy();
   expect(csp).toContain("frame-ancestors 'none'");
-  expect(csp).toContain("script-src 'self' 'unsafe-inline';");
+  const script = csp.split("; ").find((d) => d.startsWith("script-src "))!;
+  expect(script).toContain("'nonce-");
+  expect(script).not.toContain("'unsafe-inline'");
   expect(csp).not.toContain("unsafe-eval");
   expect(csp).toContain("connect-src 'self' https://api.kie.ai");
   expect(csp).toContain("object-src 'none'");
@@ -30,4 +32,10 @@ test("page works under the CSP", async ({ page }) => {
   await page.getByRole("button", { name: "Connect API key" }).click();
   await expect(page.getByRole("dialog")).toBeVisible();
   expect(violations).toEqual([]);
+});
+
+test("nonce differs per request", async ({ request }) => {
+  const nonce = async () => /'nonce-([^']+)'/.exec((await request.get("/")).headers()["content-security-policy"])![1];
+  const [a, b] = [await nonce(), await nonce()];
+  expect(a).not.toBe(b);
 });
