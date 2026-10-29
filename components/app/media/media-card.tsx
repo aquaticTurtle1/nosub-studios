@@ -12,8 +12,9 @@ import { cn } from "@/lib/utils";
 
 export type CardAction = "download" | "open" | "reuse" | "reference" | "animate" | "stop" | "resume" | "redownload";
 
+// Cloud mode keeps no local copy (localPath is always null); the result is shown from its Kie.ai link.
 export const fileUrl = (o: TaskOutput, download = false) =>
-  o.localPath ? backend.outputUrl(o, { download }) : null;
+  o.localPath || (isCloud() && o.url) ? backend.outputUrl(o, { download }) : null;
 
 export function formatClock(ms: number) {
   const s = Math.max(0, Math.floor(ms / 1000));
@@ -240,7 +241,7 @@ function DoneCard({
             days <= 3 ? "text-np-warning" : "text-np-text-secondary",
           )}
         >
-          Available {days} more days
+          Available {days} more {days === 1 ? "day" : "days"}
         </span>
       )}
       {isCloud() && task.unsynced && (

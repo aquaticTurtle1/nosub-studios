@@ -1,11 +1,24 @@
 // Stand-in for the Kie.ai API during e2e tests: nothing leaves the machine, no credits.
 // Records uploads and createTask bodies; GET /__calls returns them, POST /__reset clears.
+// Cloud mode calls Kie.ai straight from the browser, so every response carries CORS headers and
+// OPTIONS preflights are answered. POST /__drop_next_create makes the next createTask hang up
+// without a response (an ambiguous submit) after recording it.
 import fs from "node:fs";
 import http from "node:http";
 import path from "node:path";
 
 const port = Number(process.env.MOCK_KIE_PORT || 3199);
 let calls = [];
+let dropNextCreate = false;
+const CORS = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+  "Access-Control-Allow-Headers": "authorization, content-type",
+  "Access-Control-Max-Age": "600",
+  // A fresh connection per request: Chrome silently re-sends a POST when a REUSED keep-alive connection is
+  // reset before any response, which would hide the "ambiguous submit" case from the test.
+  Connection: "close",
+};
 // Tasks that finish → their result file. Z-Image always finishes (image by aspect ratio);
 // a video task finishes when its prompt contains "#finish". Everything else stays "generating".
 const finishes = new Map();
@@ -17,6 +30,11 @@ const PNG = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR
 http
   .createServer((req, res) => {
     const url = new URL(req.url, "http://x");
+    for (const [k, v] of Object.entries(CORS)) res.setHeader(k, v);
+    if (req.method === "OPTIONS") {
+      res.statusCode = 204;
+      return res.end();
+    }
     const chunks = [];
     req.on("data", (c) => chunks.push(c));
     req.on("end", () => {
@@ -26,8 +44,13 @@ http
         res.end(JSON.stringify(o));
       };
       if (url.pathname === "/__calls") return send(calls);
+      if (url.pathname === "/__drop_next_create") {
+        dropNextCreate = true;
+        return send({ ok: true });
+      }
       if (url.pathname === "/__reset") {
         calls = [];
+        dropNextCreate = false;
         return send({ ok: true });
       }
       if (url.pathname === "/api/v1/chat/credit") return send({ code: 200, msg: "success", data: 1000 });
@@ -44,6 +67,10 @@ http
       if (url.pathname === "/api/v1/jobs/createTask") {
         const parsed = JSON.parse(body.toString() || "{}");
         calls.push({ type: "createTask", body: parsed });
+        if (dropNextCreate) {
+          dropNextCreate = false;
+          return req.socket.destroy();
+        }
         const taskId = `mock_${calls.length}`;
         const input = parsed.input ?? {};
         if (String(parsed.model).startsWith("z-image")) finishes.set(taskId, IMAGE_BY_ASPECT[input.aspect_ratio] ?? "img-1200x1200.png");

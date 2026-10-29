@@ -227,7 +227,9 @@ const draftPath = (mode: string) => `/api/cloud/drafts/${encodeURIComponent(mode
 export const cloudBackend: StudioBackend = {
   key: {
     async status() {
-      return { configured: !!(await loadKey()), source: "browser" };
+      const configured = !!(await loadKey());
+      // No key: source must be null, or the app would never show onboarding.
+      return { configured, source: configured ? "browser" : null };
     },
     async connect(key, opts) {
       const { remembered } = await saveKey(key, opts);
@@ -264,6 +266,8 @@ export const cloudBackend: StudioBackend = {
         // server down: local history only
       }
       const pending = new Set((await store.unsynced()).map((t) => t.id));
+      // A reload loses the in-page retry timer; a leftover outbox is pushed again whenever the history is read.
+      if (pending.size) void scheduleSync();
       return mergeTasks(local, remote)
         .filter((t) => (!q.category || t.category === q.category) && (!q.activeOnly || isActive(t)))
         .slice(0, q.limit ?? 200)
