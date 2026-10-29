@@ -3,6 +3,7 @@ import { randomUUID } from "node:crypto";
 import type { CostEstimate } from "@/lib/catalog/pricing";
 import { getModel } from "@/lib/catalog/registry";
 import type { Category, CatalogModel } from "@/lib/catalog/types";
+import { backoffMs, POLL_START_MS, TIMEOUT_MS } from "@/lib/generation/timing";
 import { adapterFor } from "@/lib/kie/adapters";
 import type { NormalizedStatus } from "@/lib/kie/adapters/types";
 import { getCredits } from "@/lib/kie/client";
@@ -10,21 +11,6 @@ import { KieError, serializeError } from "@/lib/kie/errors";
 import { isTerminal, type LocalState, type TaskRecord, type Tracking } from "@/lib/task-types";
 import { db } from "./db";
 import { storeOutputs } from "./storage";
-
-/** Overall tracking window per category (video tasks can exceed 10 minutes). */
-export const TIMEOUT_MS: Record<Category, number> = {
-  image: 15 * 60_000,
-  audio: 20 * 60_000,
-  tools: 20 * 60_000,
-  video: 90 * 60_000,
-};
-
-const POLL_START_MS = 4_000;
-const POLL_CAP_MS = 30_000;
-
-export function backoffMs(attempt: number): number {
-  return Math.min(POLL_CAP_MS, Math.round(POLL_START_MS * 1.5 ** attempt));
-}
 
 type Row = Record<string, string | number | null>;
 

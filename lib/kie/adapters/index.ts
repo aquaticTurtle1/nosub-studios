@@ -1,4 +1,3 @@
-import "server-only";
 import type { Family } from "@/lib/catalog/types";
 import { marketAdapter } from "./market";
 import { omniAssetAdapter } from "./omni-asset";

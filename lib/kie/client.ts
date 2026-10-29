@@ -1,8 +1,15 @@
-import "server-only";
 import { KieError, kindForCode } from "./errors";
 
-export const KIE_API_BASE_URL = (process.env.KIE_API_BASE_URL || "https://api.kie.ai").replace(/\/$/, "");
-export const KIE_UPLOAD_BASE_URL = (process.env.KIE_UPLOAD_BASE_URL || "https://kieai.redpandaai.co").replace(/\/$/, "");
+export const KIE_API_BASE_URL = (
+  process.env.NEXT_PUBLIC_KIE_API_BASE_URL ||
+  process.env.KIE_API_BASE_URL ||
+  "https://api.kie.ai"
+).replace(/\/$/, "");
+export const KIE_UPLOAD_BASE_URL = (
+  process.env.NEXT_PUBLIC_KIE_UPLOAD_BASE_URL ||
+  process.env.KIE_UPLOAD_BASE_URL ||
+  "https://kieai.redpandaai.co"
+).replace(/\/$/, "");
 
 export interface KieEnvelope<T> {
   code: number;

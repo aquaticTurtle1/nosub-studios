@@ -1,5 +1,3 @@
-import "server-only";
-import { randomUUID } from "node:crypto";
 import { kieRequest } from "../client";
 import type { ProviderAdapter } from "./types";
 
@@ -12,7 +10,7 @@ export const omniAssetAdapter: ProviderAdapter = {
   async submit(model, input, { key }) {
     const data = await kieRequest<Record<string, unknown>>({ key, path: model.createPath, json: input, timeoutMs: 60_000 });
     return {
-      taskId: `local-${randomUUID()}`,
+      taskId: `local-${crypto.randomUUID()}`,
       immediate: { state: "success", rawState: "sync", outputs: [], resultObject: data },
     };
   },

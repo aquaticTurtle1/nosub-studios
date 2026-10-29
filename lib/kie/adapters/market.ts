@@ -1,4 +1,3 @@
-import "server-only";
 import { kieRequest } from "../client";
 import { KieError } from "../errors";
 import { normalizeRecordInfo, type RecordInfoData } from "./normalize";

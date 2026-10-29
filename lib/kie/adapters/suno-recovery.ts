@@ -1,4 +1,3 @@
-import "server-only";
 import { kieRequest } from "../client";
 import { marketAdapter } from "./market";
 import { normalizeLooseStatus } from "./normalize";
