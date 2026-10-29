@@ -316,3 +316,29 @@ test("expiry badge", async ({ page }) => {
   await expect(page.getByText("Available 1 more day", { exact: true })).toHaveCount(1);
   await expect(page.getByText("Available 12 more days", { exact: true })).toHaveCount(1);
 });
+
+test("a cloud result shows in the library and Explore, and can be picked as a reference", async ({ page }) => {
+  await connectKey(page);
+  await generateImage(page, `explore probe ${Date.now()}`);
+  await expect(results(page).first()).toBeVisible({ timeout: 30_000 });
+
+  await page.goto("/library");
+  await expect(results(page).first()).toBeVisible({ timeout: 20_000 });
+
+  await page.goto("/");
+  await expect(page.getByText(/Kie\.ai keeps your results for 14 days/)).toBeVisible();
+  await expect(page.getByText(/stay on this computer/)).toHaveCount(0);
+  await expect(page.getByLabel("Start here").locator(`img[src^="${MOCK}/files/"]`).first()).toBeVisible({ timeout: 20_000 });
+
+  await page.goto("/video");
+  await page.getByRole("button", { name: /^Add references\./ }).click();
+  const dialog = page.getByRole("dialog");
+  await dialog.getByRole("tab", { name: "Images" }).click();
+  await dialog.getByRole("button", { name: /^Z-Image / }).first().click();
+  await dialog.getByRole("button", { name: "Add 1 reference" }).click();
+  await expect(dialog).toHaveCount(0);
+  const attached = page.getByLabel("Attached references");
+  await expect(attached.getByText("image_1")).toBeVisible();
+  // The Kie.ai link itself is the reference: shown from the mock, no local file involved.
+  await expect(attached.locator(`img[src^="${MOCK}/files/"]`).first()).toBeVisible();
+});

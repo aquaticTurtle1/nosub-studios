@@ -4,6 +4,7 @@ import { Check, Film } from "lucide-react";
 import type { Family } from "@/lib/catalog/families";
 import type { TaskRecord } from "@/lib/task-types";
 import { cn } from "@/lib/utils";
+import { outputUsable } from "@/lib/ui/output-media";
 import { fileUrl } from "../media/media-card";
 
 export const TASK_ID_FIELD = /^(task_?id|taskId|original_task_id|origin_task_id)$/;
@@ -38,7 +39,7 @@ export function ExtendSource({
       <ul className="grid grid-cols-3 gap-2">
         {videos.map((t) => {
           const out = t.outputs.find((o) => o.kind === "video")!;
-          const src = fileUrl(out);
+          const src = outputUsable(t, out) ? fileUrl(out) : null;
           const on = selected === t.kieTaskId;
           return (
             <li key={t.id}>

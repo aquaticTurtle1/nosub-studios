@@ -2,6 +2,7 @@
 
 import { Check } from "lucide-react";
 import type { TaskOutput, TaskRecord } from "@/lib/task-types";
+import { outputUsable } from "@/lib/ui/output-media";
 import { cn } from "@/lib/utils";
 import { type CardAction, MediaCard } from "./media-card";
 
@@ -31,7 +32,7 @@ export function Feed({
   return (
     <div className="columns-1 gap-4 sm:columns-2 2xl:columns-3">
       {items.map((it) => {
-        const pickable = Boolean(selection && it.task.outputs.some((o) => o.localPath));
+        const pickable = Boolean(selection && it.task.outputs.some((o) => outputUsable(it.task, o)));
         const on = Boolean(selection?.selected.has(it.task.id));
         return (
           <div key={it.key} className="relative mb-4 break-inside-avoid">

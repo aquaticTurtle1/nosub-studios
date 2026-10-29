@@ -10,6 +10,8 @@ import { useTasks } from "@/components/studio/use-tasks";
 import type { TaskOutput, TaskRecord } from "@/lib/task-types";
 import { Feed } from "../media/feed";
 import { Lightbox, lightboxItems } from "../media/lightbox";
+import { isCloud } from "@/lib/mode";
+import { outputUsable } from "@/lib/ui/output-media";
 import { fileUrl } from "../media/media-card";
 import { useCardActions } from "../media/use-card-actions";
 import { ExamplesDialog } from "./examples-dialog";
@@ -70,7 +72,7 @@ function latest(tasks: TaskRecord[], kind: "image" | "video", skip = 0): string 
   const found: string[] = [];
   for (const t of tasks) {
     if (t.state !== "success") continue;
-    for (const o of t.outputs as TaskOutput[]) if (o.kind === kind && fileUrl(o)) found.push(fileUrl(o)!);
+    for (const o of t.outputs as TaskOutput[]) if (o.kind === kind && outputUsable(t, o) && fileUrl(o)) found.push(fileUrl(o)!);
   }
   return found[skip] ?? found[0] ?? null;
 }
@@ -83,14 +85,16 @@ export function ExplorePage() {
   const { onAction, lightbox, openLightbox, closeLightbox } = useCardActions({ act });
   const reduced = useReducedMotion();
   const [examples, setExamples] = useState(false);
-  const done = useMemo(() => tasks.filter((t) => t.state === "success" && t.outputs.some((o) => o.localPath)).slice(0, 24), [tasks]);
+  const done = useMemo(() => tasks.filter((t) => t.state === "success" && t.outputs.some((o) => outputUsable(t, o))).slice(0, 24), [tasks]);
 
   return (
     <main className="mx-auto grid w-full max-w-7xl content-start gap-10 p-4 sm:p-6">
       <header className="grid gap-2 pt-2">
         <h1 className="font-display text-[34px] leading-tight font-semibold sm:text-[48px] sm:leading-[56px]">What are we making?</h1>
         <p className="max-w-[60ch] text-sm text-np-text-secondary">
-          Pick a starting point. Everything runs on your Kie.ai key, and the files stay on this computer.
+          {isCloud()
+            ? "Pick a starting point. Everything runs on your Kie.ai key. Kie.ai keeps your results for 14 days, and your history follows the key."
+            : "Pick a starting point. Everything runs on your Kie.ai key, and the files stay on this computer."}
         </p>
       </header>
 

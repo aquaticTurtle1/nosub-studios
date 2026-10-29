@@ -4,6 +4,7 @@ import { AudioLines, Clapperboard, Image as ImageIcon, Wrench } from "lucide-rea
 import { backend } from "@/lib/backend";
 import type { CatalogSummary } from "@/lib/catalog/types";
 import type { TaskRecord } from "@/lib/task-types";
+import { outputUsable } from "@/lib/ui/output-media";
 import { cn } from "@/lib/utils";
 
 const CAT_ICON = { image: ImageIcon, video: Clapperboard, audio: AudioLines, tools: Wrench } as const;
@@ -12,7 +13,7 @@ const CAT_ICON = { image: ImageIcon, video: Clapperboard, audio: AudioLines, too
 export function lastThumb(tasks: TaskRecord[], key: string): string | null {
   for (const t of tasks) {
     if (t.modelKey !== key || t.state !== "success") continue;
-    const img = t.outputs.find((o) => o.kind === "image" && o.localPath);
+    const img = t.outputs.find((o) => o.kind === "image" && outputUsable(t, o));
     if (img) return backend.outputUrl(img);
   }
   return null;

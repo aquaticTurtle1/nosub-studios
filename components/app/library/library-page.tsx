@@ -8,6 +8,8 @@ import { Input } from "@/components/ui/input";
 import { useTasks } from "@/components/studio/use-tasks";
 import { backend } from "@/lib/backend";
 import type { TaskRecord } from "@/lib/task-types";
+import { isCloud } from "@/lib/mode";
+import { outputUsable } from "@/lib/ui/output-media";
 import { cn } from "@/lib/utils";
 import { Feed } from "../media/feed";
 import { Lightbox, lightboxItems } from "../media/lightbox";
@@ -55,8 +57,8 @@ export function LibraryPage() {
     return out;
   }, [tasks, filter, q, sort]);
   const spent = tasks.reduce((n, t) => n + (t.creditsConsumed ?? 0), 0);
-  const pickable = list.filter((t) => t.outputs.some((o) => o.localPath));
-  const files = tasks.filter((t) => selected.has(t.id)).reduce((n, t) => n + t.outputs.filter((o) => o.localPath).length, 0);
+  const pickable = list.filter((t) => t.outputs.some((o) => outputUsable(t, o)));
+  const files = tasks.filter((t) => selected.has(t.id)).reduce((n, t) => n + t.outputs.filter((o) => outputUsable(t, o)).length, 0);
 
   return (
     <main className="mx-auto grid w-full max-w-7xl content-start gap-6 p-4 sm:p-6">
@@ -64,7 +66,7 @@ export function LibraryPage() {
         <div className="grid gap-1">
           <h1 className="font-display text-[28px] leading-9 font-semibold">Library</h1>
           <p className="text-[13px] text-np-text-muted">
-            {tasks.length} generations, {Math.round(spent * 100) / 100} credits charged. Files are kept on this computer.
+            {tasks.length} generations, {Math.round(spent * 100) / 100} credits charged. {isCloud() ? "Kie.ai keeps results for 14 days." : "Files are kept on this computer."}
           </p>
         </div>
       </header>

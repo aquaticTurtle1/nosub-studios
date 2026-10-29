@@ -1,6 +1,7 @@
 "use client";
 
 import type { TaskOutput, TaskRecord } from "@/lib/task-types";
+import { outputUsable } from "@/lib/ui/output-media";
 import { outputUri, type UploadRecord, uploadUri } from "@/lib/ui/local-ref";
 import type { LibraryItem } from "./use-generator";
 
@@ -29,12 +30,14 @@ const promptOf = (t: TaskRecord) => {
 
 /** A finished generation's local file as a reference (used directly from data/outputs). */
 export function outputItem(task: TaskRecord, o: TaskOutput): LibraryEntry | null {
-  if (!o.localPath || o.kind === "file") return null;
-  const ext = o.localPath.split(".").pop()?.toLowerCase() ?? "";
+  if (o.kind === "file" || !outputUsable(task, o)) return null;
+  // Cloud keeps no local copy: the Kie.ai link itself is the reference value (passed to Kie.ai untouched).
+  const path = o.localPath ?? new URL(o.url).pathname;
+  const ext = path.split(".").pop()?.toLowerCase() ?? "";
   return {
-    uri: outputUri(o.localPath),
+    uri: o.localPath ? outputUri(o.localPath) : o.url,
     kind: o.kind,
-    name: `${task.modelTitle.trim()} ${o.localPath.split("/").pop()}`,
+    name: `${task.modelTitle.trim()} ${decodeURIComponent(path.split("/").pop() ?? "")}`,
     mime: MIME[ext] ?? `${o.kind}/*`,
     size: o.bytes ?? 0,
     createdAt: task.completedAt ?? task.createdAt,
