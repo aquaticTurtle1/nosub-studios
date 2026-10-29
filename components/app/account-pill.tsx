@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import type { TaskRecord } from "@/lib/task-types";
 import { cn } from "@/lib/utils";
-import { api } from "@/components/studio/api";
+import { backend } from "@/lib/backend";
 import { useStudio } from "@/components/studio/app-context";
 import { ErrorText } from "@/components/studio/error-text";
 import { KeyDialog } from "@/components/studio/key-dialog";
@@ -22,7 +22,7 @@ export function AccountPill() {
 
   useEffect(() => {
     if (!open) return;
-    void api<{ tasks: TaskRecord[] }>("/api/tasks?limit=12").then((r) => setRecent(r.tasks));
+    void backend.tasks.list({ limit: 12 }).then(setRecent);
   }, [open, credits.balance]);
 
   const low = credits.balance !== null && credits.balance < 50;

@@ -6,10 +6,10 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogFooter, DialogTitle } from "@/components/ui/dialog";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { api } from "@/components/studio/api";
+import { backend } from "@/lib/backend";
 import type { TaskRecord } from "@/lib/task-types";
 import type { RefKind } from "@/lib/ui/fields";
-import { previewUrl, type UploadRecord } from "@/lib/ui/local-ref";
+
 import { cn } from "@/lib/utils";
 import { generatedItems, type LibraryEntry, uploadItem } from "./library-items";
 import { fmtDur } from "./refs-box";
@@ -63,8 +63,9 @@ export function MediaLibrary({
   useEffect(() => {
     if (!open) return;
     let cancelled = false;
-    api<{ uploads: UploadRecord[] }>("/api/uploads")
-      .then((r) => !cancelled && setUploads(r.uploads.map(uploadItem)))
+    backend.uploads
+      .list()
+      .then((r) => !cancelled && setUploads(r.map(uploadItem)))
       .catch(() => !cancelled && setUploads([]));
     return () => {
       cancelled = true;
@@ -248,7 +249,7 @@ export function MediaLibrary({
 }
 
 function LibraryThumb({ it }: { it: LibraryEntry }) {
-  const src = previewUrl(it.uri);
+  const src = backend.previewUrl(it.uri);
   const [measured, setMeasured] = useState<number | null>(null);
   const dur = it.duration ?? measured;
   return (

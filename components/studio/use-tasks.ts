@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { isTerminal, type TaskRecord } from "@/lib/task-types";
-import { api, postJson } from "./api";
+import { backend } from "@/lib/backend";
 import { useStudio } from "./app-context";
 
 const TICK_MS = 3_000;
@@ -32,10 +32,7 @@ export function useTasks(opts: { limit?: number; category?: string } = {}) {
   }, []);
 
   const reload = useCallback(async () => {
-    const qs = new URLSearchParams({ limit: String(opts.limit ?? 200) });
-    if (opts.category) qs.set("category", opts.category);
-    const r = await api<{ tasks: TaskRecord[] }>(`/api/tasks?${qs}`);
-    setTasks(r.tasks);
+    setTasks(await backend.tasks.list({ limit: opts.limit ?? 200, category: opts.category }));
     setLoaded(true);
   }, [opts.limit, opts.category]);
 
@@ -51,9 +48,9 @@ export function useTasks(opts: { limit?: number; category?: string } = {}) {
       for (const t of active) {
         if (stopped) return;
         try {
-          const r = await api<{ task: TaskRecord }>(`/api/tasks/${t.id}`);
-          upsert(r.task);
-          if (isTerminal(r.task.state)) void refreshCredits();
+          const task = await backend.tasks.get(t.id);
+          upsert(task);
+          if (isTerminal(task.state)) void refreshCredits();
         } catch {
           // Network blip: keep tracking, try again next tick (never resubmit).
         }
@@ -67,9 +64,9 @@ export function useTasks(opts: { limit?: number; category?: string } = {}) {
 
   const act = useCallback(
     async (id: string, action: "stop" | "resume" | "redownload" | "poll") => {
-      const r = await api<{ task: TaskRecord }>(`/api/tasks/${id}`, postJson({ action }));
-      upsert(r.task);
-      if (isTerminal(r.task.state)) void refreshCredits();
+      const task = await backend.tasks.act(id, action);
+      upsert(task);
+      if (isTerminal(task.state)) void refreshCredits();
     },
     [upsert, refreshCredits],
   );

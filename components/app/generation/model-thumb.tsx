@@ -1,6 +1,7 @@
 "use client";
 
 import { AudioLines, Clapperboard, Image as ImageIcon, Wrench } from "lucide-react";
+import { backend } from "@/lib/backend";
 import type { CatalogSummary } from "@/lib/catalog/types";
 import type { TaskRecord } from "@/lib/task-types";
 import { cn } from "@/lib/utils";
@@ -12,7 +13,7 @@ export function lastThumb(tasks: TaskRecord[], key: string): string | null {
   for (const t of tasks) {
     if (t.modelKey !== key || t.state !== "success") continue;
     const img = t.outputs.find((o) => o.kind === "image" && o.localPath);
-    if (img) return `/api/files/${img.localPath}`;
+    if (img) return backend.outputUrl(img);
   }
   return null;
 }

@@ -5,7 +5,8 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { api, ApiError, postJson } from "@/components/studio/api";
+import { backend } from "@/lib/backend";
+import { api, ApiError } from "@/components/studio/api";
 import { estimateCost } from "@/lib/catalog/pricing";
 import { validateInput } from "@/lib/catalog/schema";
 import type { CatalogModel } from "@/lib/catalog/types";
@@ -72,10 +73,13 @@ export function ExamplesDialog({ open, onOpenChange, onStarted }: { open: boolea
     let started = 0;
     for (const p of runnable) {
       try {
-        const r = await api<{ task: TaskRecord }>(
-          "/api/generate",
-          postJson({ modelKey: p.model.key, variant: p.model.variants[0].title, input: p.input, idempotencyKey: crypto.randomUUID(), confirmed: true }),
-        );
+        const r = await backend.generate({
+          modelKey: p.model.key,
+          variant: p.model.variants[0].title,
+          input: p.input,
+          idempotencyKey: crypto.randomUUID(),
+          confirmed: true,
+        });
         onStarted(r.task);
         started++;
       } catch (e) {

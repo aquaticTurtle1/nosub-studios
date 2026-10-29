@@ -2,6 +2,7 @@
 
 import { AlertTriangle, CircleAlert, Clapperboard, Download, FileAudio, Maximize2, Pause, Play, RotateCcw, Square, Undo2, ImagePlus } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import { backend } from "@/lib/backend";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { isTerminal, type TaskOutput, type TaskRecord } from "@/lib/task-types";
 import { humanError } from "@/lib/ui/human-error";
@@ -10,7 +11,7 @@ import { cn } from "@/lib/utils";
 export type CardAction = "download" | "open" | "reuse" | "reference" | "animate" | "stop" | "resume" | "redownload";
 
 export const fileUrl = (o: TaskOutput, download = false) =>
-  o.localPath ? `/api/files/${o.localPath.split("/").map(encodeURIComponent).join("/")}${download ? "?download" : ""}` : null;
+  o.localPath ? backend.outputUrl(o, { download }) : null;
 
 export function formatClock(ms: number) {
   const s = Math.max(0, Math.floor(ms / 1000));

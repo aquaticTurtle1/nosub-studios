@@ -6,7 +6,8 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import type { SerializedKieError } from "@/lib/kie/errors";
-import { api, ApiError, postJson } from "./api";
+import { backend } from "@/lib/backend";
+import { ApiError } from "./api";
 import { useStudio } from "./app-context";
 import { ErrorText } from "./error-text";
 
@@ -35,13 +36,21 @@ export function KeyDialog({ open, onOpenChange }: { open: boolean; onOpenChange:
     setBusy(true);
     setResult(null);
     try {
-      const r = await api<{ valid: boolean; balance?: number; error?: SerializedKieError }>("/api/key", postJson({ key: value }));
-      setResult(r.valid ? { valid: true, balance: r.balance! } : { valid: false, error: r.error! });
+      const r = await backend.key.connect(value, { remember: true });
+      setResult({ valid: true, balance: r.balance! });
       setValue("");
       setReplacing(false);
       await refreshKey();
     } catch (e) {
-      if (e instanceof ApiError) setResult({ valid: false, error: e.error });
+      if (e instanceof ApiError) {
+        setResult({ valid: false, error: e.error });
+        // Status 200: the key was saved but failed the credit check (as before: clear the field, refresh).
+        if (e.status === 200) {
+          setValue("");
+          setReplacing(false);
+          await refreshKey();
+        }
+      }
     } finally {
       setBusy(false);
     }
@@ -50,7 +59,7 @@ export function KeyDialog({ open, onOpenChange }: { open: boolean; onOpenChange:
   async function remove() {
     setBusy(true);
     try {
-      await api("/api/key", { method: "DELETE" });
+      await backend.key.disconnect();
       setResult(null);
       await refreshKey();
     } finally {

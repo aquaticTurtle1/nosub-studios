@@ -10,15 +10,15 @@ import type { CatalogModel, CatalogSummary } from "@/lib/catalog/types";
 import type { SerializedKieError } from "@/lib/kie/errors";
 import type { TaskRecord } from "@/lib/task-types";
 import { fileProblem, initialChipValue, kindCapacity, layoutFields, type RefKind } from "@/lib/ui/fields";
-import { collectLocalUris, previewUrl, type UploadRecord, uploadUri } from "@/lib/ui/local-ref";
+import { backend, type Draft } from "@/lib/backend";
+import { collectLocalUris, uploadUri } from "@/lib/ui/local-ref";
 import { type AttachedRef, assignTargets, mergeRefs, nextLabel } from "@/lib/ui/request";
-import { api, ApiError, postJson } from "@/components/studio/api";
+import { api, ApiError } from "@/components/studio/api";
 import { useStudio } from "@/components/studio/app-context";
 import { countFiles, defaultsFor, type FormValue, type FormValues, mapFiles } from "@/components/studio/form-values";
 import { notifyError } from "../notify";
 import type { ModeConfig } from "./mode-config";
 import { fmtCount } from "@/lib/ui/prompt-doc";
-import { probeMedia } from "./probe-media";
 
 /** A file from the local library (an upload or a finished generation). */
 export interface LibraryItem {
@@ -43,16 +43,6 @@ export type Ref = AttachedRef<string> & {
   saving?: boolean;
   problem?: string;
 };
-
-interface Draft {
-  familyId?: string | null;
-  pinned?: boolean;
-  modelKey?: string | null;
-  variant?: string | null;
-  extendMode?: boolean;
-  values?: Record<string, unknown>;
-  refs?: { uri: string; kind: RefKind; label?: string; name: string; mime: string; size: number; duration?: number | null; target: string | null }[];
-}
 
 const PENDING_UPLOAD = "https://pending-upload.invalid/file";
 const RECENT_KEY = (mode: string) => `studio.recent.${mode}`;
@@ -85,15 +75,6 @@ const kindOfFile = (f: File): RefKind | null => {
   const t = f.type.split("/")[0];
   return t === "image" || t === "video" || t === "audio" ? t : null;
 };
-
-/** Saves a file into the local library (data/uploads); same bytes → same entry. */
-export async function saveLocalFile(file: File): Promise<UploadRecord> {
-  const probe = await probeMedia(file);
-  const form = new FormData();
-  form.append("file", file);
-  for (const [k, v] of Object.entries(probe)) if (v !== null) form.append(k, String(v));
-  return (await api<{ upload: UploadRecord }>("/api/uploads", { method: "POST", body: form })).upload;
-}
 
 const hasFile = (v: unknown) => countFiles(v as FormValue) > 0;
 
@@ -148,7 +129,8 @@ export function useGenerator(
   // Restore this page's draft (prompt, model, settings, references) once.
   useEffect(() => {
     let cancelled = false;
-    api<{ draft: Draft | null; dropped: string[] }>(`/api/drafts/${draftKey}`)
+    backend.drafts
+      .get(draftKey)
       .then(({ draft: d, dropped }) => {
         if (cancelled) return;
         if (d) {
@@ -165,7 +147,7 @@ export function useGenerator(
               mime: r.mime,
               size: r.size,
               duration: r.duration,
-              preview: previewUrl(r.uri),
+              preview: backend.previewUrl(r.uri),
             });
           }
           setRefs(restoredRefs);
@@ -504,10 +486,10 @@ export function useGenerator(
       setRefs((r) => [...r, ...placeholders]);
       ok.forEach(({ file }, i) => {
         const ph = placeholders[i];
-        saveLocalFile(file)
+        backend.uploads.save(file)
           .then((u) => {
             const uri = uploadUri(u.id);
-            setRefs((r) => r.map((x) => (x.id === ph.id ? { ...x, value: uri, preview: previewUrl(uri), duration: u.duration, saving: false } : x)));
+            setRefs((r) => r.map((x) => (x.id === ph.id ? { ...x, value: uri, preview: backend.previewUrl(uri), duration: u.duration, saving: false } : x)));
           })
           .catch((e) => {
             setRefs((r) => r.filter((x) => x.id !== ph.id));
@@ -536,7 +518,7 @@ export function useGenerator(
         mime: it.mime,
         size: it.size,
         duration: it.duration,
-        preview: previewUrl(it.uri),
+        preview: backend.previewUrl(it.uri),
       }));
       setRefs((r) => [...r, ...added]);
     },
@@ -650,14 +632,18 @@ export function useGenerator(
       try {
         let merged = mergeRefs(values as Record<string, unknown>, assigned, layout.refFields) as FormValues;
         // Files picked in Advanced fields join the local library like every other reference.
-        if (hasFile(merged)) merged = (await mapFiles(merged, async (f) => uploadUri((await saveLocalFile(f.file)).id))) as FormValues;
+        if (hasFile(merged)) merged = (await mapFiles(merged, async (f) => uploadUri((await backend.uploads.save(f.file)).id))) as FormValues;
         // The server uploads local references to Kie.ai right before createTask (uploads expire after 24 h).
         setPhase(collectLocalUris(merged).length ? "uploading" : "submitting");
-        const r = await api<{ task: TaskRecord }>(
-          "/api/generate",
+        const r = await backend.generate({
+          modelKey: model.key,
+          variant: variant.title,
+          input: (pruneEmpty(merged) ?? {}) as Record<string, unknown>,
+          idempotencyKey,
+          confirmed: true,
           // The prompt keeps its chips; the server serializes them using `references`.
-          postJson({ modelKey: model.key, variant: variant.title, input: pruneEmpty(merged) ?? {}, idempotencyKey, confirmed: true, references: promptRefs }),
-        );
+          references: promptRefs,
+        });
         pushRecent(mode.id, model.key);
         if (familyId) pushList(RECENT_FAMILY_KEY(mode.id), familyId);
         opts.onSubmitted(r.task);
@@ -680,7 +666,7 @@ export function useGenerator(
 
   // Keep the draft (per page) so a reload brings everything back: saved 400 ms after the
   // last change, and right away when the page is closed or reloaded.
-  const pendingDraft = useRef<string | null>(null);
+  const pendingDraft = useRef<Draft | null>(null);
   useEffect(() => {
     if (!restored) return;
     const refNames = new Set(layout?.refFields.map((f) => f.name));
@@ -695,21 +681,20 @@ export function useGenerator(
         .filter((r) => !r.saving && r.value)
         .map((r) => ({ uri: r.value, kind: r.kind, label: r.label, name: r.name, mime: r.mime, size: r.size, duration: r.duration ?? null, target: r.target })),
     };
-    const body = JSON.stringify(draft);
-    pendingDraft.current = body;
+    pendingDraft.current = draft;
     const t = setTimeout(() => {
       pendingDraft.current = null;
-      void fetch(`/api/drafts/${draftKey}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body }).catch(() => {});
+      void backend.drafts.put(draftKey, draft);
     }, 400);
     return () => clearTimeout(t);
   }, [restored, draftKey, familyId, pinned, modelKey, variant, extendMode, values, refs, layout]);
   useEffect(() => {
     const flush = () => {
-      const body = pendingDraft.current;
-      if (!body) return;
+      const draft = pendingDraft.current;
+      if (!draft) return;
       pendingDraft.current = null;
       // keepalive lets the request finish while the page unloads.
-      void fetch(`/api/drafts/${draftKey}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body, keepalive: true }).catch(() => {});
+      void backend.drafts.put(draftKey, draft, { keepalive: true });
     };
     window.addEventListener("pagehide", flush);
     return () => {

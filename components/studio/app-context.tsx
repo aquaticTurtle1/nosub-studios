@@ -5,7 +5,8 @@ import type { SerializedKieError } from "@/lib/kie/errors";
 import type { KeySource } from "@/lib/server/key";
 import type { TaskRecord } from "@/lib/task-types";
 import type { LibraryItem } from "@/components/app/generation/use-generator";
-import { api, ApiError } from "./api";
+import { backend } from "@/lib/backend";
+import { ApiError } from "./api";
 
 interface Credits {
   balance: number | null;
@@ -52,7 +53,7 @@ export function StudioProvider({ children }: { children: React.ReactNode }) {
   const refreshCredits = useCallback(async () => {
     setCredits((c) => ({ ...c, loading: true }));
     try {
-      const r = await api<{ balance: number; checkedAt: number }>("/api/credits");
+      const r = await backend.credits();
       setCredits({ balance: r.balance, error: null, checkedAt: r.checkedAt, loading: false });
     } catch (e) {
       setCredits({ balance: null, error: e instanceof ApiError ? e.error : null, checkedAt: Date.now(), loading: false });
@@ -60,8 +61,8 @@ export function StudioProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const refreshKey = useCallback(async () => {
-    const r = await api<{ configured: boolean; source: KeySource }>("/api/key");
-    setKeySource(r.source);
+    const r = await backend.key.status();
+    setKeySource(r.source as KeySource);
     setKeyLoaded(true);
     if (r.configured) await refreshCredits();
     else setCredits({ balance: null, error: null, checkedAt: null, loading: false });

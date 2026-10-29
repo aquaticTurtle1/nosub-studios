@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useTasks } from "@/components/studio/use-tasks";
+import { backend } from "@/lib/backend";
 import type { TaskRecord } from "@/lib/task-types";
 import { cn } from "@/lib/utils";
 import { Feed } from "../media/feed";
@@ -125,13 +126,10 @@ export function LibraryPage() {
             size="sm"
             className="ml-auto"
             // Stays enabled and explains, per the design rules.
-            onClick={(e) => {
-              if (selected.size) return;
-              e.preventDefault();
-              toast("Select generations first.", { description: "Click the cards you want, then download them as one ZIP." });
+            onClick={() => {
+              if (selected.size) void backend.downloadZip([...selected]);
+              else toast("Select generations first.", { description: "Click the cards you want, then download them as one ZIP." });
             }}
-            render={<a href={`/api/library-download?tasks=${[...selected].join(",")}`} download />}
-            nativeButton={false}
           >
             <Download /> Download {files || ""} {files === 1 ? "file" : "files"}
           </Button>
