@@ -15,7 +15,7 @@
 </p>
 
 <p align="center">
-  <a href="#quick-start"><b>Open the cloud studio</b></a> <!-- TODO: cloud URL -->
+  <a href="https://nosub-studios.vercel.app"><b>Open the cloud studio</b></a>
   &nbsp;&nbsp;|&nbsp;&nbsp;
   <a href="#run-locally"><b>Run locally</b></a>
 </p>
@@ -93,7 +93,7 @@ flowchart LR
 
 ### Cloud
 
-Open the cloud studio <!-- TODO: cloud URL -->, connect your Kie.ai key, and generate.
+Open the [cloud studio](https://nosub-studios.vercel.app), connect your Kie.ai key, and generate.
 
 <p align="center">
   <img src="design/cloud/onboarding-1440.png" width="80%" alt="NoSub Studios cloud onboarding: connect your Kie.ai key">
