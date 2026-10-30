@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { bad, gate, readJson, TaskRecordSchema } from "@/lib/cloud/server/api";
+import { bad, checkNewOwner, checkRecords, gate, readJson, TaskRecordSchema } from "@/lib/cloud/server/api";
 import { listTasks, saveTasks } from "@/lib/cloud/server/history";
 import { noStore } from "@/lib/server/http";
 import type { TaskRecord } from "@/lib/task-types";
@@ -26,6 +26,12 @@ export async function POST(req: Request) {
   if (body instanceof Response) return body;
   const parsed = Batch.safeParse(body.value);
   if (!parsed.success) return bad("Invalid tasks");
+  const tooBig = checkRecords(parsed.data.tasks);
+  if (tooBig) return tooBig;
+  if (parsed.data.tasks.length) {
+    const capped = await checkNewOwner(req, g.owner);
+    if (capped) return capped;
+  }
   await saveTasks(g.owner, parsed.data.tasks as unknown as TaskRecord[]);
   return noStore({ saved: parsed.data.tasks.length });
 }

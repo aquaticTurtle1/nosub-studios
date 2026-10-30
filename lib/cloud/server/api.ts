@@ -1,7 +1,7 @@
 import "server-only";
 import { z } from "zod";
 import { cloudOnly } from "@/lib/server/mode-guard";
-import { ownerOf } from "./history";
+import { MAX_FUTURE_MS, MAX_RECORD_BYTES, ownerHasTasks, ownerOf } from "./history";
 import { hit } from "./rate-limit";
 
 export const MAX_BODY = 256 * 1024;
@@ -54,3 +54,29 @@ export async function readJson(req: Request): Promise<{ value: unknown } | Respo
 }
 
 export const bad = (msg: string) => fail(422, msg);
+
+/** New owners one IP may create per day. */
+export const NEW_OWNERS_PER_IP_PER_DAY = 20;
+
+/**
+ * Checks a task batch before it is stored: each record's JSON at most 32 KB (413), createdAt not more than a day
+ * ahead (422). Returns an error Response, or null.
+ */
+export function checkRecords(tasks: { createdAt: number }[], now = Date.now()): Response | null {
+  for (const t of tasks) {
+    if (new TextEncoder().encode(JSON.stringify(t)).length > MAX_RECORD_BYTES) return fail(413, "Task record too large");
+    if (t.createdAt > now + MAX_FUTURE_MS) return bad("createdAt is in the future");
+  }
+  return null;
+}
+
+/**
+ * Per-IP daily cap on distinct NEW owners (owners are free to make, so they are the quota attack). Counted only
+ * when the owner has no rows yet, so a normal user's repeated syncs never use it up. Returns an error Response, or null.
+ */
+export async function checkNewOwner(req: Request, owner: string): Promise<Response | null> {
+  if (await ownerHasTasks(owner)) return null;
+  const day = new Date().toISOString().slice(0, 10);
+  const ok = await hit(`owners:${clientIp(req)}:${day}`, NEW_OWNERS_PER_IP_PER_DAY, 24 * 60 * 60 * 1000);
+  return ok ? null : fail(429, "Too many new histories from this address today");
+}

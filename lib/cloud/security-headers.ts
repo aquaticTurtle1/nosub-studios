@@ -15,6 +15,25 @@ const RESULT_HOSTS = [
   "https://static.aiquickdraw.com",
   "https://tempfile.redpandaai.co",
 ];
+
+/** Host names (no scheme) Kie.ai serves results from. The file proxy streams only from these. */
+export const RESULT_HOSTNAMES: readonly string[] = RESULT_HOSTS.map((h) => new URL(h).hostname);
+
+/**
+ * Parses a URL for the file proxy: https only, no credentials, default port, host exactly in the allowlist.
+ * Parsing is done by URL, so tricks like https://evil.com@tempfile.aiquickdraw.com resolve to the real host
+ * (and are rejected anyway because of the userinfo). Returns null for anything else, including IP literals.
+ */
+export function allowedResultUrl(raw: string): URL | null {
+  let u: URL;
+  try {
+    u = new URL(raw);
+  } catch {
+    return null;
+  }
+  if (u.protocol !== "https:" || u.username || u.password || u.port) return null;
+  return RESULT_HOSTNAMES.includes(u.hostname) ? u : null;
+}
 const API_HOSTS = ["https://api.kie.ai", "https://kieai.redpandaai.co", "https://tempfile.aiquickdraw.com"];
 
 function origin(url: string | undefined): string[] {

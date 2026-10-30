@@ -5,7 +5,9 @@ import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { ApiError } from "@/components/studio/api";
 import { useTasks } from "@/components/studio/use-tasks";
+import { notifyError } from "../notify";
 import { backend } from "@/lib/backend";
 import type { TaskRecord } from "@/lib/task-types";
 import { isCloud } from "@/lib/mode";
@@ -36,6 +38,19 @@ export function LibraryPage() {
   const { onAction, lightbox, openLightbox, closeLightbox } = useCardActions({ act });
   const [selecting, setSelecting] = useState(false);
   const [selected, setSelected] = useState<Set<string>>(new Set());
+  async function downloadSelected() {
+    try {
+      const res = await backend.downloadZip([...selected]);
+      if (res && res.skipped > 0) {
+        toast.warning(`${res.skipped} ${res.skipped === 1 ? "file was" : "files were"} skipped`, {
+          description: "Expired or unreachable (Kie.ai keeps results 14 days). The rest are in your ZIP.",
+        });
+      }
+    } catch (e) {
+      if (e instanceof ApiError) notifyError(e.error);
+      else toast.error("Download failed", { description: "The ZIP could not be built. Try again." });
+    }
+  }
   const toggle = (id: string) =>
     setSelected((s) => {
       const next = new Set(s);
@@ -129,7 +144,7 @@ export function LibraryPage() {
             className="ml-auto"
             // Stays enabled and explains, per the design rules.
             onClick={() => {
-              if (selected.size) void backend.downloadZip([...selected]);
+              if (selected.size) void downloadSelected();
               else toast("Select generations first.", { description: "Click the cards you want, then download them as one ZIP." });
             }}
           >

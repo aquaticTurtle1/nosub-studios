@@ -126,7 +126,7 @@ export async function fingerprint(key: string): Promise<string> {
   const enc = new TextEncoder();
   const hmacKey = await crypto.subtle.importKey(
     "raw",
-    enc.encode(key),
+    enc.encode(key.trim()),
     { name: "HMAC", hash: "SHA-256" },
     false,
     ["sign"],

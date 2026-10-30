@@ -2,10 +2,10 @@ import { ApiError } from "@/components/studio/api";
 import { probeMedia } from "@/components/app/generation/probe-media";
 import type { Category } from "@/lib/catalog/types";
 import { expiresAt } from "@/lib/cloud/expiry";
-import { clearKey, loadKey, saveKey } from "@/lib/cloud/key-vault";
+import { clearKey, fingerprint, loadKey, saveKey } from "@/lib/cloud/key-vault";
 import * as store from "@/lib/cloud/local-store";
 import { mergeTasks } from "@/lib/cloud/merge";
-import { applyStatus, pollIfDue, safeCredits } from "@/lib/cloud/poll";
+import { applyStatus, pollIfDue, safeCredits, settleInterrupted } from "@/lib/cloud/poll";
 import { scheduleSync, studioFetch } from "@/lib/cloud/sync";
 import { prepareGeneration } from "@/lib/generation/prepare";
 import { POLL_START_MS, TIMEOUT_MS } from "@/lib/generation/timing";
@@ -36,6 +36,15 @@ function toApiError(e: unknown): ApiError {
   const err = serializeError(e);
   return apiError(err, err.code ?? 0);
 }
+
+/** Fingerprint of the connected key, or null when none: scopes the local outbox to one key. */
+async function currentOwner(): Promise<string | null> {
+  const key = await loadKey();
+  return key ? fingerprint(key) : null;
+}
+
+/** Ids of submits running in THIS page right now; they are not "interrupted" however long they take. */
+const submitting = new Set<string>();
 
 async function requireKey(): Promise<string> {
   const key = await loadKey();
@@ -148,12 +157,29 @@ async function generate(body: Parameters<StudioBackend["generate"]>[0]): ReturnT
     const error = (b.error as SerializedKieError) ?? plainError("server", `HTTP ${prep.status}`, "Request not accepted");
     throw new ApiError(error, prep.status, b);
   }
+  const owner = await fingerprint(key);
   // 3. idempotency
   const existing = await store.findByIdempotency(body.idempotencyKey);
   if (existing) return { task: existing, duplicate: true };
   // 4. write the row BEFORE any network call
-  let task = freshTask(prep);
-  await store.putTask(task, { idempotencyKey: body.idempotencyKey, synced: false });
+  const task = freshTask(prep);
+  submitting.add(task.id);
+  try {
+    return await submit(task, prep, key, owner, body.idempotencyKey);
+  } finally {
+    submitting.delete(task.id);
+  }
+}
+
+async function submit(
+  first: TaskRecord,
+  prep: Extract<ReturnType<typeof prepareGeneration>, { ok: true }>,
+  key: string,
+  owner: string,
+  idempotencyKey: string,
+): ReturnType<StudioBackend["generate"]> {
+  let task = first;
+  await store.putTask(task, { idempotencyKey, synced: false, owner });
 
   // 5. credit check (an unreadable balance never blocks)
   const before = await safeCredits(key);
@@ -185,9 +211,26 @@ async function generate(body: Parameters<StudioBackend["generate"]>[0]): ReturnT
     }
   }
   // 9. persist, then push to the history server in the background
-  await store.putTask(task, { idempotencyKey: body.idempotencyKey, synced: false });
+  await store.putTask(task, { idempotencyKey, synced: false, owner });
   void scheduleSync();
   return { task, duplicate: false };
+}
+
+/**
+ * Downloads one result file in the browser. A network/CORS failure (fetch throws) is retried once through the
+ * key-less file proxy; an HTTP error (expired file) is not. Returns null when the file cannot be had.
+ */
+async function fetchResultFile(url: string): Promise<Uint8Array | null> {
+  const read = async (res: Response | null) => (res?.ok ? new Uint8Array(await res.arrayBuffer()) : null);
+  try {
+    return await read(await fetch(url, { cache: "no-store" }));
+  } catch {
+    try {
+      return await read(await studioFetch(`/api/cloud/file?url=${encodeURIComponent(url)}`));
+    } catch {
+      return null;
+    }
+  }
 }
 
 // ---- tasks ----
@@ -205,13 +248,22 @@ async function remoteTask(id: string): Promise<TaskRecord | null> {
 }
 
 async function save(t: TaskRecord): Promise<TaskRecord> {
-  await store.updateTask(t, { synced: false });
+  const owner = await currentOwner();
+  if (owner) await store.updateTask(t, { synced: false, owner });
   void scheduleSync();
   return t;
 }
 
+/** A submit that never finished (tab closed mid-upload or mid-createTask) becomes submit_unknown. Never resubmitted. */
+async function settleStuck(t: TaskRecord): Promise<TaskRecord> {
+  const next = settleInterrupted(t, Date.now(), submitting);
+  return next === t ? t : save(next);
+}
+
 async function loadTask(id: string): Promise<TaskRecord> {
-  const t = (await store.getTask(id)) ?? (await remoteTask(id));
+  const owner = await currentOwner();
+  const local = owner ? await store.getTask(id, owner) : null;
+  const t = (local ? await settleStuck(local) : null) ?? (await remoteTask(id));
   if (!t) throw apiError(plainError("not_found", "Not found (404)", "Task not found"), 404);
   return t;
 }
@@ -231,7 +283,12 @@ export const cloudBackend: StudioBackend = {
       // No key: source must be null, or the app would never show onboarding.
       return { configured, source: configured ? "browser" : null };
     },
-    async connect(key, opts) {
+    async connect(raw, opts) {
+      // Same as local mode: trim first, so the fingerprint (and the history it opens) does not depend on how the key was pasted.
+      const key = raw.trim();
+      if (key.length < 8 || key.length > 512) {
+        throw apiError(plainError("validation", "Invalid key", "The API key must be 8 to 512 characters."), 422);
+      }
       const { remembered } = await saveKey(key, opts);
       try {
         return { balance: await getCredits(key), remembered };
@@ -251,7 +308,8 @@ export const cloudBackend: StudioBackend = {
   },
   tasks: {
     async list(q) {
-      const local = await store.listTasks();
+      const owner = await currentOwner();
+      const local = owner ? await Promise.all((await store.listTasks(owner)).map(settleStuck)) : [];
       let remote: TaskRecord[] = [];
       try {
         const qs = new URLSearchParams({ limit: String(q.limit ?? 200) });
@@ -265,7 +323,7 @@ export const cloudBackend: StudioBackend = {
       } catch {
         // server down: local history only
       }
-      const pending = new Set((await store.unsynced()).map((t) => t.id));
+      const pending = new Set((owner ? await store.unsynced(owner) : []).map((t) => t.id));
       // A reload loses the in-page retry timer; a leftover outbox is pushed again whenever the history is read.
       if (pending.size) void scheduleSync();
       return mergeTasks(local, remote)
@@ -364,22 +422,31 @@ export const cloudBackend: StudioBackend = {
   async downloadZip(taskIds) {
     const slug = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 40);
     const entries: { name: string; data: Uint8Array; date: Date }[] = [];
+    let skipped = 0;
+    const owner = await currentOwner();
     for (const id of taskIds) {
-      const t = await store.getTask(id);
-      if (!t || Date.now() > expiresAt(t)) continue;
+      // Merged history: this browser's copy, else the server history (a generation made on another device).
+      const t = (owner ? await store.getTask(id, owner) : null) ?? (await remoteTask(id));
+      if (!t) {
+        skipped += 1;
+        continue;
+      }
+      if (Date.now() > expiresAt(t)) {
+        skipped += t.outputs.length;
+        continue;
+      }
       const day = new Date(t.createdAt).toISOString().slice(0, 10);
       for (const [i, o] of t.outputs.entries()) {
-        try {
-          const res = await fetch(o.url, { cache: "no-store" });
-          if (!res.ok) continue;
-          entries.push({
-            name: `${day}-${slug(t.modelTitle)}-${t.id.slice(0, 8)}/${String(i + 1).padStart(2, "0")}${extOf(new URL(o.url).pathname) || ".bin"}`,
-            data: new Uint8Array(await res.arrayBuffer()),
-            date: new Date(t.createdAt),
-          });
-        } catch {
-          // expired or unreachable file: skipped
+        const data = await fetchResultFile(o.url);
+        if (!data) {
+          skipped += 1; // expired or unreachable
+          continue;
         }
+        entries.push({
+          name: `${day}-${slug(t.modelTitle)}-${t.id.slice(0, 8)}/${String(i + 1).padStart(2, "0")}${extOf(new URL(o.url).pathname) || ".bin"}`,
+          data,
+          date: new Date(t.createdAt),
+        });
       }
     }
     if (!entries.length) {
@@ -393,5 +460,6 @@ export const cloudBackend: StudioBackend = {
     a.click();
     a.remove();
     setTimeout(() => URL.revokeObjectURL(url), 60_000);
+    return { skipped };
   },
 };

@@ -48,6 +48,7 @@ export interface StudioBackend {
   };
   previewUrl(uri: string): string;
   outputUrl(o: TaskOutput, opts?: { download?: boolean }): string;
-  downloadZip(taskIds: string[]): Promise<void>;
+  /** Cloud mode reports how many files could not be included (expired or unreachable). */
+  downloadZip(taskIds: string[]): Promise<{ skipped: number } | void>;
 }
 

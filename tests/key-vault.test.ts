@@ -84,3 +84,11 @@ describe("key vault", () => {
     expect(fp).not.toContain("test-key");
   });
 });
+
+describe("fingerprint trims the key (I3)", () => {
+  it("surrounding whitespace does not change the owner", async () => {
+    const { fingerprint } = await import("@/lib/cloud/key-vault");
+    expect(await fingerprint(" key-123456\n")).toBe(await fingerprint("key-123456"));
+    expect(await fingerprint("key-123456")).not.toBe(await fingerprint("key-123457"));
+  });
+});

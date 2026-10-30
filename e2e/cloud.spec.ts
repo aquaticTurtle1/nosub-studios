@@ -1,3 +1,5 @@
+import { execFileSync } from "node:child_process";
+import path from "node:path";
 import { expect, type BrowserContext, type Page, test } from "@playwright/test";
 import { promptEditor, setPrompt } from "./prompt-helpers";
 
@@ -341,4 +343,62 @@ test("a cloud result shows in the library and Explore, and can be picked as a re
   await expect(attached.getByText("image_1")).toBeVisible();
   // The Kie.ai link itself is the reference: shown from the mock, no local file involved.
   await expect(attached.locator(`img[src^="${MOCK}/files/"]`).first()).toBeVisible();
+});
+
+const zipEntries = (file: string) => {
+  const tar = process.platform === "win32" ? path.join(process.env.SystemRoot ?? "C:\\Windows", "System32", "tar.exe") : "bsdtar";
+  return execFileSync(tar, ["-tf", file], { encoding: "utf8" }).split(/\r?\n/).filter(Boolean);
+};
+
+test("cloud library: ZIP of a finished result, and of a task that exists only in server history", async ({ page }, info) => {
+  test.setTimeout(150_000); // may wait out the shared per-IP rate window below
+  const ownKey = `e2e-zip-key-${Date.now()}`; // its own history: the other tests share E2E_KEY's
+  await connectKey(page, ownKey);
+  await generateImage(page, `zip probe ${Date.now()}`);
+  await expect(results(page).first()).toBeVisible({ timeout: 30_000 });
+
+  // A task from "another device": only in Studio's history, never in this browser's IndexedDB.
+  const remoteId = await page.evaluate(
+    async ({ key, url }) => {
+      const enc = new TextEncoder();
+      const k = await crypto.subtle.importKey("raw", enc.encode(key), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
+      const sig = new Uint8Array(await crypto.subtle.sign("HMAC", k, enc.encode("kie-studio-history-v1")));
+      const owner = Array.from(sig, (b) => b.toString(16).padStart(2, "0")).join("");
+      const id = crypto.randomUUID();
+      const t = Date.now() - 3_600_000;
+      const task = {
+        id, kieTaskId: `mock_${id}`, modelKey: "z-image", modelId: "z-image/z-image", modelTitle: "Z-Image", family: "market", category: "image",
+        operation: "text-to-image", variant: null, input: { prompt: "from another device" }, state: "success", rawState: "success", tracking: "stopped",
+        progress: null, outputs: [{ url, kind: "image", source: "result", localPath: null }], result: null, error: null, estimate: null,
+        creditsBefore: null, creditsAfter: null, creditsConsumed: 0.8, createdAt: t, submittedAt: t, completedAt: t, deadlineAt: null,
+        lastPolledAt: t, nextPollAt: null, pollAttempts: 1, pollError: null, webhookAt: null,
+      };
+      // The shared per-IP limit (120/min) may be spent by earlier tests of this long file: wait out the window.
+      for (let attempt = 0; attempt < 14; attempt++) {
+        const res = await fetch("/api/cloud/tasks", { method: "POST", headers: { "Content-Type": "application/json", "X-Studio-Owner": owner }, body: JSON.stringify({ tasks: [task] }) });
+        if (res.ok) return id;
+        if (res.status !== 429) throw new Error(`seed failed ${res.status}`);
+        await new Promise((r) => setTimeout(r, 5000));
+      }
+      throw new Error("seed failed: still rate limited");
+    },
+    { key: ownKey, url: `${MOCK}/files/out.png` },
+  );
+
+  await page.goto("/library");
+  await page.getByRole("button", { name: "Select" }).click();
+  const bar = page.getByRole("toolbar", { name: "Selection" });
+  const picks = page.getByRole("button", { name: /^Select Z-Image from/ });
+  await expect(picks).toHaveCount(2, { timeout: 30_000 });
+  await picks.first().click();
+  await picks.first().click();
+  await expect(bar).toContainText("2 selected · 2 files");
+  const download = page.waitForEvent("download");
+  await bar.getByRole("button", { name: /Download 2 files/ }).click();
+  const file = info.outputPath("cloud-library.zip");
+  await (await download).saveAs(file);
+  const entries = zipEntries(file);
+  expect(entries).toHaveLength(2);
+  expect(entries.some((e) => e.includes(remoteId.slice(0, 8)))).toBe(true);
+  for (const e of entries) expect(e).toMatch(/^\d{4}-\d{2}-\d{2}-z-image-[0-9a-f]{8}\/01\.png$/);
 });

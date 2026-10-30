@@ -96,4 +96,32 @@ describe("cloud routes", () => {
     expect((await credits.GET()).status).toBe(404);
     expect((await tasks.GET(new Request(`${URL_BASE}/api/tasks`))).status).toBe(404);
   });
+
+  it("record over 32 KB -> 413; fine under it", async () => {
+    const m = await load("cloud");
+    const rec = (pad: number) => ({ id: "big", createdAt: 5, pad: "z".repeat(pad) });
+    expect((await m.tasks.POST(post({ tasks: [rec(33 * 1024)] }))).status).toBe(413);
+    expect((await m.tasks.POST(post({ tasks: [rec(30 * 1024)] }))).status).toBe(200);
+  });
+
+  it("createdAt more than a day ahead -> 422; a few hours ahead is accepted", async () => {
+    const m = await load("cloud");
+    const now = Date.now();
+    expect((await m.tasks.POST(post({ tasks: [{ id: "f", createdAt: now + 2 * 86_400_000 }] }))).status).toBe(422);
+    expect((await m.tasks.POST(post({ tasks: [{ id: "ok", createdAt: now + 3_600_000 }] }))).status).toBe(200);
+  });
+
+  it("per-IP daily cap on new owners; existing owners are not counted", async () => {
+    const m = await load("cloud");
+    const ip = "7.7.7.7";
+    const as = (n: number) => hdr({ "x-forwarded-for": ip, "x-studio-owner": n.toString(16).padStart(64, "0") });
+    const push = (n: number) => m.tasks.POST(post({ tasks: [{ id: `t${n}`, createdAt: 1 }] }, as(n)));
+    for (let n = 1; n <= 20; n++) expect((await push(n)).status).toBe(200);
+    expect((await push(21)).status).toBe(429);
+    // owner 1 already has rows: pushing again is fine and does not touch the cap
+    expect((await push(1)).status).toBe(200);
+    // another IP has its own budget
+    const other = await m.tasks.POST(post({ tasks: [{ id: "z", createdAt: 1 }] }, hdr({ "x-forwarded-for": "8.8.8.8", "x-studio-owner": "f".repeat(64) })));
+    expect(other.status).toBe(200);
+  });
 });

@@ -67,3 +67,28 @@ export function pollIfDue(task: TaskRecord, key: string, opts: { force?: boolean
   inflight.set(task.id, p);
   return p;
 }
+
+/** A submit with no Kie task id that has been open this long was cut off (closed tab, crash), not slow. */
+export const SUBMIT_STALE_MS = 2 * 60_000;
+
+/**
+ * Turns an interrupted submit into submit_unknown. We cannot tell whether createTask reached Kie.ai, so the task is
+ * never resubmitted automatically. `inFlight` holds ids still running in this page. Returns the same object when untouched.
+ */
+export function settleInterrupted(task: TaskRecord, now: number, inFlight: ReadonlySet<string> = new Set()): TaskRecord {
+  if (task.state !== "submitting" || task.kieTaskId || inFlight.has(task.id) || now - task.createdAt < SUBMIT_STALE_MS) return task;
+  return {
+    ...task,
+    state: "submit_unknown",
+    completedAt: now,
+    nextPollAt: null,
+    error: {
+      kind: "network",
+      label: "Submit interrupted",
+      message:
+        "The submit was interrupted before it finished (the page was closed or reloaded), so it is not known whether Kie.ai received it. Check your Kie.ai history before retrying.",
+      ambiguous: true,
+      code: undefined,
+    },
+  };
+}

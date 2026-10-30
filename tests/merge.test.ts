@@ -25,3 +25,17 @@ describe("mergeTasks", () => {
     expect(mergeTasks([t("a", 1), t("c", 3)], [t("b", 2)]).map((x) => x.id)).toEqual(["c", "b", "a"]);
   });
 });
+
+describe("settleInterrupted (I1)", () => {
+  const base = { id: "t", state: "submitting", kieTaskId: null, createdAt: 0, tracking: "active" } as never;
+  it("only stale submitting rows without a Kie id, and not in-flight ones", async () => {
+    const { settleInterrupted, SUBMIT_STALE_MS } = await import("@/lib/cloud/poll");
+    expect(settleInterrupted(base, SUBMIT_STALE_MS - 1)).toBe(base);
+    const done = settleInterrupted(base, SUBMIT_STALE_MS);
+    expect(done.state).toBe("submit_unknown");
+    expect(done.error?.ambiguous).toBe(true);
+    expect(settleInterrupted(base, SUBMIT_STALE_MS * 10, new Set(["t"]))).toBe(base);
+    const sent = { ...(base as object), kieTaskId: "k" } as never;
+    expect(settleInterrupted(sent, SUBMIT_STALE_MS * 10)).toBe(sent);
+  });
+});

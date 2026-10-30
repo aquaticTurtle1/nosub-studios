@@ -6,6 +6,10 @@ import { readyDb } from "./db";
 const DAY_MS = 24 * 60 * 60 * 1000;
 export const RETENTION_MS = 90 * DAY_MS;
 export const OWNER_CAP = 2000;
+/** One stored record, serialized. Bigger ones are rejected before they reach the database. */
+export const MAX_RECORD_BYTES = 32 * 1024;
+/** A client clock may run ahead a little; further than this is rejected. */
+export const MAX_FUTURE_MS = DAY_MS;
 
 export function ownerOf(fp: string): string {
   const secret = process.env.CLOUD_OWNER_SECRET;
@@ -22,7 +26,8 @@ export async function saveTasks(owner: string, tasks: TaskRecord[]): Promise<voi
       sql: `INSERT INTO tasks (owner, id, record_json, created_at, updated_at) VALUES (?, ?, ?, ?, ?)
             ON CONFLICT(owner, id) DO UPDATE SET record_json = excluded.record_json,
               created_at = excluded.created_at, updated_at = excluded.updated_at`,
-      args: [owner, t.id, JSON.stringify(t), t.createdAt, now],
+      // The client's createdAt cannot sit in the future: that would escape retention and win the 2000 cap.
+      args: [owner, t.id, JSON.stringify(t), Math.min(t.createdAt, now), now],
     })),
     "write",
   );
@@ -74,7 +79,16 @@ export async function trimOwner(owner: string, cap = OWNER_CAP): Promise<void> {
 
 export async function prune(now: number): Promise<void> {
   const c = await readyDb();
-  await c.execute({ sql: "DELETE FROM tasks WHERE created_at < ?", args: [now - RETENTION_MS] });
+  const cutoff = now - RETENTION_MS;
+  await c.execute({ sql: "DELETE FROM tasks WHERE created_at < ? OR updated_at < ?", args: [cutoff, cutoff] });
+  await c.execute({ sql: "DELETE FROM drafts WHERE updated_at < ?", args: [cutoff] });
+}
+
+/** True when this owner already has stored history. */
+export async function ownerHasTasks(owner: string): Promise<boolean> {
+  const c = await readyDb();
+  const r = await c.execute({ sql: "SELECT 1 FROM tasks WHERE owner = ? LIMIT 1", args: [owner] });
+  return r.rows.length > 0;
 }
 
 export async function getDraft(owner: string, mode: string): Promise<unknown | null> {

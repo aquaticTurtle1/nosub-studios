@@ -18,6 +18,8 @@ interface TaskRow {
   task: TaskRecord;
   idempotencyKey: string;
   synced: boolean;
+  /** Key fingerprint of the Kie.ai key that created the task. Missing on rows written before this field existed. */
+  owner?: string;
 }
 
 interface UploadRow {
@@ -81,19 +83,37 @@ async function withDb<T>(fn: (db: IDBDatabase) => Promise<T>): Promise<T> {
 
 // ---- tasks ----
 
-export function putTask(t: TaskRecord, o: { idempotencyKey: string; synced: boolean }): Promise<void> {
+export function putTask(t: TaskRecord, o: { idempotencyKey: string; synced: boolean; owner: string }): Promise<void> {
   return withDb(async (db) => {
     const tx = db.transaction(TASKS, "readwrite");
-    tx.objectStore(TASKS).put({ task: t, idempotencyKey: o.idempotencyKey, synced: o.synced } satisfies TaskRow);
+    tx.objectStore(TASKS).put({ task: t, idempotencyKey: o.idempotencyKey, synced: o.synced, owner: o.owner } satisfies TaskRow);
     await done(tx);
   });
 }
 
-export function getTask(id: string): Promise<TaskRecord | null> {
-  return withDb(async (db) => {
-    const row = (await request(db.transaction(TASKS).objectStore(TASKS).get(id))) as TaskRow | undefined;
-    return row?.task ?? null;
-  });
+/**
+ * Rows of ONE key (fingerprint). Rows written before owners were stored have no owner: they are attributed to the
+ * key that reads them first (migration-free fallback), so an upgrade does not hide existing history.
+ */
+async function ownedRows(owner: string): Promise<TaskRow[]> {
+  const rows = await withDb(async (db) => (await request(db.transaction(TASKS).objectStore(TASKS).getAll())) as TaskRow[]);
+  if (rows.some((r) => r.owner === undefined)) {
+    await withDb(async (db) => {
+      const tx = db.transaction(TASKS, "readwrite");
+      const store = tx.objectStore(TASKS);
+      const req = store.getAll();
+      req.onsuccess = () => {
+        for (const r of req.result as TaskRow[]) if (r.owner === undefined) store.put({ ...r, owner });
+      };
+      await done(tx);
+    });
+    return ownedRows(owner);
+  }
+  return rows.filter((r) => r.owner === owner);
+}
+
+export async function getTask(id: string, owner: string): Promise<TaskRecord | null> {
+  return (await ownedRows(owner)).find((r) => r.task.id === id)?.task ?? null;
 }
 
 export function findByIdempotency(key: string): Promise<TaskRecord | null> {
@@ -105,18 +125,14 @@ export function findByIdempotency(key: string): Promise<TaskRecord | null> {
   });
 }
 
-async function allRows(): Promise<TaskRow[]> {
-  return withDb(async (db) => (await request(db.transaction(TASKS).objectStore(TASKS).getAll())) as TaskRow[]);
-}
-
 /** Newest first. */
-export async function listTasks(): Promise<TaskRecord[]> {
-  return (await allRows()).map((r) => r.task).sort((a, b) => b.createdAt - a.createdAt);
+export async function listTasks(owner: string): Promise<TaskRecord[]> {
+  return (await ownedRows(owner)).map((r) => r.task).sort((a, b) => b.createdAt - a.createdAt);
 }
 
-/** Tasks not yet confirmed written to the server history. Oldest first. */
-export async function unsynced(): Promise<TaskRecord[]> {
-  return (await allRows())
+/** Tasks of this key not yet confirmed written to the server history. Oldest first. */
+export async function unsynced(owner: string): Promise<TaskRecord[]> {
+  return (await ownedRows(owner))
     .filter((r) => !r.synced)
     .map((r) => r.task)
     .sort((a, b) => a.createdAt - b.createdAt);
@@ -199,14 +215,19 @@ export function deleteUpload(id: string): Promise<void> {
 }
 
 /** Overwrites a task but keeps its idempotency key (a task from the server history gets a synthetic one). */
-export function updateTask(t: TaskRecord, o: { synced: boolean }): Promise<void> {
+export function updateTask(t: TaskRecord, o: { synced: boolean; owner: string }): Promise<void> {
   return withDb(async (db) => {
     const tx = db.transaction(TASKS, "readwrite");
     const store = tx.objectStore(TASKS);
     const req = store.get(t.id);
     req.onsuccess = () => {
       const row = req.result as TaskRow | undefined;
-      store.put({ task: t, idempotencyKey: row?.idempotencyKey ?? `remote:${t.id}`, synced: o.synced } satisfies TaskRow);
+      store.put({
+        task: t,
+        idempotencyKey: row?.idempotencyKey ?? `remote:${t.id}`,
+        synced: o.synced,
+        owner: row?.owner ?? o.owner,
+      } satisfies TaskRow);
     };
     await done(tx);
   });

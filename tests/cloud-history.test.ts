@@ -29,7 +29,7 @@ describe("cloud history", () => {
 
   it("trim keeps newest 2000", async () => {
     const now = Date.now();
-    const all = Array.from({ length: 2005 }, (_, i) => rec(`t${i}`, now + i));
+    const all = Array.from({ length: 2005 }, (_, i) => rec(`t${i}`, now - 10_000 + i));
     await saveTasks("a", all.slice(0, 1000));
     await saveTasks("a", all.slice(1000));
     const got = await listTasks("a", { limit: 5000 });
@@ -71,5 +71,43 @@ describe("cloud history", () => {
     expect(await hit("k", 2, 1000)).toBe(false);
     vi.setSystemTime(1_001_500);
     expect(await hit("k", 2, 1000)).toBe(true);
+  });
+});
+
+describe("cloud history quota (I5)", () => {
+  it("created_at is clamped to now", async () => {
+    const now = Date.now();
+    await saveTasks("a", [rec("fut", now + 5 * DAY)]);
+    const c = await (await import("@/lib/cloud/server/db")).readyDb();
+    const r = await c.execute("SELECT created_at FROM tasks WHERE id = 'fut'");
+    expect(Number(r.rows[0].created_at)).toBeLessThanOrEqual(Date.now());
+    // a far-future createdAt therefore cannot escape retention
+    await prune(Date.now() + 91 * DAY);
+    expect(await listTasks("a", {})).toEqual([]);
+  });
+
+  it("prune also drops rows by updated_at older than 90 days", async () => {
+    const now = Date.now();
+    vi.useFakeTimers();
+    vi.setSystemTime(now - 100 * DAY);
+    await saveTasks("a", [rec("stale", now - 100 * DAY)]); // updated_at 100 days ago, created_at older still
+    vi.setSystemTime(now);
+    const c = await (await import("@/lib/cloud/server/db")).readyDb();
+    await c.execute({ sql: "UPDATE tasks SET created_at = ? WHERE id = 'stale'", args: [now] }); // only updated_at is old
+    await saveTasks("a", [rec("fresh", now)]);
+    await prune(now);
+    expect((await listTasks("a", {})).map((t) => t.id)).toEqual(["fresh"]);
+  });
+
+  it("prune drops drafts not updated for 90 days", async () => {
+    const { putDraft, getDraft } = await import("@/lib/cloud/server/history");
+    const now = Date.now();
+    await putDraft("a", "image", { v: 1 });
+    await putDraft("a", "video", { v: 2 });
+    const c = await (await import("@/lib/cloud/server/db")).readyDb();
+    await c.execute({ sql: "UPDATE drafts SET updated_at = ? WHERE mode = 'image'", args: [now - 91 * DAY] });
+    await prune(now);
+    expect(await getDraft("a", "image")).toBeNull();
+    expect(await getDraft("a", "video")).toEqual({ v: 2 });
   });
 });

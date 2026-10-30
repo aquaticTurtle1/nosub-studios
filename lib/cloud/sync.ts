@@ -9,11 +9,15 @@ const BATCH = 50;
 const RETRY_MS = 30_000;
 
 /** fetch against Studio's own origin, owner header only. Returns null when there is no key. */
-export async function studioFetch(path: string, init: RequestInit = {}): Promise<Response | null> {
-  const key = await loadKey();
-  if (!key) return null;
+export async function studioFetch(path: string, init: RequestInit = {}, owner?: string): Promise<Response | null> {
+  let fp = owner;
+  if (!fp) {
+    const key = await loadKey();
+    if (!key) return null;
+    fp = await fingerprint(key);
+  }
   const headers = new Headers(init.headers);
-  headers.set("X-Studio-Owner", await fingerprint(key));
+  headers.set("X-Studio-Owner", fp);
   return fetch(path, { ...init, headers, cache: "no-store" });
 }
 
@@ -21,14 +25,19 @@ let running: Promise<void> | null = null;
 let retry: ReturnType<typeof setTimeout> | null = null;
 
 async function pushAll(): Promise<boolean> {
-  const pending = await unsynced();
+  // Only the connected key's rows: another key's history is neither shown nor sent under this key's owner.
+  const key = await loadKey();
+  if (!key) return false;
+  // One owner for the whole run: a key switch in the middle can never send these rows under another owner.
+  const owner = await fingerprint(key);
+  const pending = await unsynced(owner);
   for (let i = 0; i < pending.length; i += BATCH) {
     const batch = pending.slice(i, i + BATCH);
     const res = await studioFetch("/api/cloud/tasks", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ tasks: batch }),
-    });
+    }, owner);
     if (!res || !res.ok) return false;
     await markSynced(batch.map((t) => t.id));
   }
