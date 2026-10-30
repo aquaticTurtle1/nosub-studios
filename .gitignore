@@ -53,3 +53,9 @@ next-env.d.ts
 /playwright-report/
 /.next-e2e-cloud/
 /.next-e2e-cloud-prod/
+
+# README hero reel (rebuild: copy mp4/jpg from docs/readme into assets/)
+/docs/readme/reel/out/
+/docs/readme/reel/assets/
+/docs/readme/reel/.hyperframes/
+/docs/readme/reel/node_modules/
