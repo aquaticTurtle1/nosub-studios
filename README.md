@@ -219,4 +219,4 @@ retries, nothing is resubmitted), and an ambiguous submit.
 
 ## License
 
-TBD
+Licensed under the [Apache License 2.0](LICENSE). Copyright 2026 aquaticTurtle1 and the NoSub Studios contributors — see [NOTICE](NOTICE).
