@@ -1,3 +1,4 @@
+import "@/lib/zod-setup";
 import { z } from "zod";
 import { type CostEstimate, estimateCost, needsConfirmation } from "@/lib/catalog/pricing";
 import { serializePrompt } from "@/lib/catalog/prompt-refs";

@@ -27,11 +27,18 @@ test("page works under the CSP", async ({ page }) => {
   page.on("console", (m) => {
     if (/Content Security Policy|Refused to/i.test(m.text())) violations.push(m.text());
   });
+  // A violation caught in try/catch (zod's eval probe) never reaches the console, only this event.
+  await page.addInitScript(() => {
+    const w = window as unknown as { __csp: string[] };
+    w.__csp = [];
+    document.addEventListener("securitypolicyviolation", (e) => w.__csp.push(`${e.violatedDirective} ${e.blockedURI}`));
+  });
   await page.goto("/");
   // Hydration needs the nonce'd scripts: the key dialog only opens when React runs.
   await page.getByRole("button", { name: "Connect API key" }).click();
   await expect(page.getByRole("dialog")).toBeVisible();
   expect(violations).toEqual([]);
+  expect(await page.evaluate(() => (window as unknown as { __csp: string[] }).__csp)).toEqual([]);
 });
 
 test("nonce differs per request", async ({ request }) => {

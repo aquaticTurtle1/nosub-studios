@@ -18,11 +18,6 @@ import type { RefKind } from "@/lib/ui/fields";
 import { collectLocalUris, isLocalUri, parseLocalUri, replaceLocalUris } from "@/lib/ui/local-ref";
 import { zip } from "@/lib/zip";
 import type { Draft, StudioBackend, TaskRecord, UploadRecord } from "./types";
-import { z } from "zod";
-import { isCloud } from "@/lib/mode";
-
-// The cloud CSP forbids eval; zod's `new Function` probe would be blocked and logged as a CSP violation.
-if (isCloud()) z.config({ jitless: true });
 
 // Nothing below may ever put the Kie key in a thrown message, a log line, or a request to Studio's own origin.
 
